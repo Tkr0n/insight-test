@@ -87,7 +87,12 @@ export function TaskCard({
               <IconButton
                 size="small"
                 color="primary"
-                onClick={() => onTransition(task.id, VALID_TRANSITIONS[task.status][0])}
+                onClick={() => {
+                  const nextStatus = VALID_TRANSITIONS[task.status]?.[0];
+                  if (nextStatus) {
+                    onTransition(task.id, nextStatus);
+                  }
+                }}
                 disabled={isTransitioning}
               >
                 {isTransitioning ? (
