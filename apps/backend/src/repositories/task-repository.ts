@@ -1,5 +1,5 @@
 import { PrismaClient, Task, TaskStatus } from '@prisma/client';
-import { validateStateTransition } from '@/use-cases/state-machine';
+import { validateStateTransition } from '../use-cases/state-machine';
 
 export interface CreateTaskInput {
   title: string;
