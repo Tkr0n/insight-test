@@ -8,7 +8,9 @@ import { taskRoutes } from './controllers/task.controller.js';
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN,
+}));
 app.use(express.json());
 
 app.use('/api/tasks', taskRoutes);
