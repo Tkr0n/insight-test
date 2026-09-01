@@ -1,0 +1,60 @@
+# =========================
+# OS & IDEs
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# =========================
+# Next.js / Node
+# =========================
+node_modules/
+.next/
+out/
+build/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnp.*
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# =========================
+# Docker & Local Infrastructure
+# =========================
+# Ignore local volumes if they are mapped to project folders.
+.localstack/
+/data/
+/postgres-data/
+/redis-data/
+
+# =========================
+# Env vars / Secrets
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Skills and context
+# =========================
+docs/superpowers

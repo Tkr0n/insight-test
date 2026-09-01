@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: insightt_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: insightt_user
+      POSTGRES_PASSWORD: insightt_password
+      POSTGRES_DB: insightt_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - insightt_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insightt_user -d insightt_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.0
+    container_name: insightt_pgbouncer
+    restart: unless-stopped
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: insightt_user
+      DATABASE_PASSWORD: insightt_password
+      DATABASE_NAME: insightt_db
+      POOL_MODE: transaction
+      DEFAULT_POOL_SIZE: 20
+      MAX_CLIENT_CONN: 200
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      SERVER_TLS: "no"
+    ports:
+      - "6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - insightt_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: insightt_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - insightt_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  localstack:
+    image: localstack/localstack:3.5
+    container_name: insightt_localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: cognito,lambda
+      PERSISTENCE: 1
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./infra/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    networks:
+      - insightt_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  localstack_data:
+
+networks:
+  insightt_network:
+    driver: bridge

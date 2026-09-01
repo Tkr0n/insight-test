@@ -1,0 +1,14 @@
+# Normalize line endings to LF (Linux/Unix) for all text files.
+* text=auto eol=lf
+
+# Exceptions for binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Ignore auto-generated files in GitHub language statistics (Linguist)
+package-lock.json linguist-generated
+poetry.lock linguist-generated
+alembic/versions/* linguist-generated
