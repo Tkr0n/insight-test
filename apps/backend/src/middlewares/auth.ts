@@ -17,16 +17,23 @@ declare global {
   }
 }
 
-const client = jwksClient({
-  jwksUri: `https://cognito-idp.${env.AWS_REGION}.amazonaws.com/${env.COGNITO_USER_POOL_ID}/.well-known/jwks.json`,
-  cache: true,
-  cacheMaxAge: 600000,
-  rateLimit: true,
-  jwksRequestsPerMinute: 10,
-});
+let client: jwksClient.JwksClient | null = null;
+
+function getClient(): jwksClient.JwksClient {
+  if (!client) {
+    client = jwksClient({
+      jwksUri: `https://cognito-idp.${env.AWS_REGION}.amazonaws.com/${env.COGNITO_USER_POOL_ID}/.well-known/jwks.json`,
+      cache: true,
+      cacheMaxAge: 600000,
+      rateLimit: true,
+      jwksRequestsPerMinute: 10,
+    });
+  }
+  return client;
+}
 
 function getSigningKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback): void {
-  client.getSigningKey(header.kid, (err, key) => {
+  getClient().getSigningKey(header.kid, (err, key) => {
     if (err) {
       callback(err);
       return;

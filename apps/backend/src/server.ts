@@ -4,6 +4,7 @@ import cors from 'cors';
 import { env } from './config/env.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { taskRoutes } from './controllers/task.controller.js';
+import { resolveCognitoConfig } from './config/cognito.js';
 
 const app = express();
 
@@ -23,8 +24,14 @@ app.use(errorHandler);
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+async function start() {
+  await resolveCognitoConfig();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+start();
 
 export default app;

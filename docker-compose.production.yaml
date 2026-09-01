@@ -2,31 +2,34 @@ version: "3.9"
 
 services:
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/insightt-frontend:latest
+    image: ghcr.io/tkr0n/insight-test/insightt-frontend:latest
     container_name: insightt_frontend
     restart: unless-stopped
-    ports:
-      - "80:80"
     depends_on:
       - backend
     networks:
       - insightt_network
+      - coolify
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/insightt-backend:latest
+    image: ghcr.io/tkr0n/insight-test/insightt-backend:latest
     container_name: insightt_backend
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     environment:
+      NODE_ENV: production
+      PORT: 3001
       DATABASE_URL: postgresql://insightt_user:insightt_password@pgbouncer:6432/insightt_db
       REDIS_URL: redis://redis:6379
-      AWS_DEFAULT_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     depends_on:
-      postgres:
-        condition: service_healthy
+      pgbouncer:
+        condition: service_started
       redis:
         condition: service_healthy
       localstack:
@@ -53,23 +56,21 @@ services:
       retries: 5
 
   pgbouncer:
-    image: edoburu/pgbouncer:1.22.0
+    image: edoburu/pgbouncer:latest
     container_name: insightt_pgbouncer
     restart: unless-stopped
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: insightt_user
-      DATABASE_PASSWORD: insightt_password
-      DATABASE_NAME: insightt_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: insightt_user
+      DB_PASSWORD: insightt_password
+      DB_NAME: insightt_db
       POOL_MODE: transaction
       DEFAULT_POOL_SIZE: 20
       MAX_CLIENT_CONN: 200
       MIN_POOL_SIZE: 5
       RESERVE_POOL_SIZE: 5
-      SERVER_TLS: "no"
-    ports:
-      - "6432:6432"
+      SERVER_TLS_SSLMODE: disable
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,8 +82,6 @@ services:
     container_name: insightt_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -97,14 +96,12 @@ services:
     image: localstack/localstack:3.5
     container_name: insightt_localstack
     restart: unless-stopped
-    ports:
-      - "4566:4566"
     environment:
       SERVICES: cognito,lambda
       PERSISTENCE: 1
       AWS_DEFAULT_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
       - localstack_data:/var/lib/localstack
@@ -121,3 +118,5 @@ volumes:
 networks:
   insightt_network:
     driver: bridge
+  coolify:
+    external: true
