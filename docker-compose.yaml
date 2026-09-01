@@ -1,22 +1,63 @@
 version: "3.9"
 
 services:
+  frontend:
+    image: ghcr.io/${REPO_OWNER:-tkr0n}/insight-test-frontend:latest
+    container_name: insightt_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+      VITE_COGNITO_USER_POOL_ID: ${VITE_COGNITO_USER_POOL_ID:-us-east-1_local}
+      VITE_COGNITO_CLIENT_ID: ${VITE_COGNITO_CLIENT_ID:-localclientid}
+      VITE_AWS_ENDPOINT: ${VITE_AWS_ENDPOINT:-http://localhost:4566}
+    depends_on:
+      - backend
+    networks:
+      - insightt_network
+
+  backend:
+    image: ghcr.io/${REPO_OWNER:-tkr0n}/insight-test-backend:latest
+    container_name: insightt_backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:-postgresql://insightt_user:insightt_password@pgbouncer:6432/insightt_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-http://localstack:4566}
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - insightt_network
+
   postgres:
     image: postgres:16-alpine
     container_name: insightt_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: insightt_user
-      POSTGRES_PASSWORD: insightt_password
-      POSTGRES_DB: insightt_db
+      POSTGRES_USER: ${POSTGRES_USER:-insightt_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-insightt_password}
+      POSTGRES_DB: ${POSTGRES_DB:-insightt_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - insightt_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U insightt_user -d insightt_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-insightt_user} -d ${POSTGRES_DB:-insightt_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -28,9 +69,9 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: insightt_user
-      DB_PASSWORD: insightt_password
-      DB_NAME: insightt_db
+      DB_USER: ${POSTGRES_USER:-insightt_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-insightt_password}
+      DB_NAME: ${POSTGRES_DB:-insightt_db}
       POOL_MODE: transaction
       DEFAULT_POOL_SIZE: 20
       MAX_CLIENT_CONN: 200
@@ -38,7 +79,7 @@ services:
       RESERVE_POOL_SIZE: 5
       SERVER_TLS_SSLMODE: disable
     ports:
-      - "6432:6432"
+      - "${PGBOUNCER_PORT:-6432}:6432"
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,7 +92,7 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -67,13 +108,13 @@ services:
     container_name: insightt_localstack
     restart: unless-stopped
     ports:
-      - "4566:4566"
+      - "${LOCALSTACK_PORT:-4566}:4566"
     environment:
       SERVICES: cognito,lambda
       PERSISTENCE: 1
-      AWS_DEFAULT_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
       - localstack_data:/var/lib/localstack

@@ -59,6 +59,41 @@ APP_CLIENT_ID=$(awslocal cognito-idp create-user-pool-client \
 echo "    App Client ID: $APP_CLIENT_ID"
 
 # -----------------------------------------------
+# 3. Create Test Users
+# -----------------------------------------------
+echo "[3/3] Creating test users..."
+
+create_test_user() {
+  local email=$1
+  local password=$2
+  local name=$3
+  
+  echo "    Creating user: $email"
+  
+  # Sign up the user
+  awslocal cognito-idp sign-up \
+    --client-id "$APP_CLIENT_ID" \
+    --username "$email" \
+    --password "$password" \
+    --user-attributes Name=email,Value="$email" Name=name,Value="$name" \
+    > /dev/null
+  
+  # Auto-confirm the user (skip email verification)
+  awslocal cognito-idp admin-confirm-sign-up \
+    --user-pool-id "$USER_POOL_ID" \
+    --username "$email" \
+    > /dev/null
+  
+  echo "      ✓ Created and confirmed: $email"
+}
+
+# Test user 1
+create_test_user "test@insightt.com" "TestPass123" "Test User"
+
+# Test user 2
+create_test_user "admin@insightt.com" "AdminPass123" "Admin User"
+
+# -----------------------------------------------
 # Summary
 # -----------------------------------------------
 echo ""
@@ -68,6 +103,14 @@ echo "========================================="
 echo "  User Pool ID:    $USER_POOL_ID"
 echo "  App Client ID:   $APP_CLIENT_ID"
 echo "  Region:          us-east-1"
+echo ""
+echo "  Test Users Created:"
+echo "  ────────────────────────────────────────"
+echo "  Email:           test@insightt.com"
+echo "  Password:        TestPass123"
+echo "  ────────────────────────────────────────"
+echo "  Email:           admin@insightt.com"
+echo "  Password:        AdminPass123"
 echo "========================================="
 
 # -----------------------------------------------
