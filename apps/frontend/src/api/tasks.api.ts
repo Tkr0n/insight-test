@@ -6,11 +6,6 @@ export async function fetchTasks(): Promise<Task[]> {
   return response.data.data;
 }
 
-export async function fetchTask(id: string): Promise<Task> {
-  const response = await apiClient.get<ApiResponse<Task>>(`/tasks/${id}`);
-  return response.data.data;
-}
-
 export async function createTask(payload: {
   title: string;
   description?: string;

@@ -45,12 +45,12 @@ export function DashboardPage() {
 
   const getErrorMessage = (err: unknown): string => {
     if (err && typeof err === 'object' && 'response' in err) {
-      const axiosErr = err as { response?: { status?: number; data?: { message?: string } } };
+      const axiosErr = err as { response?: { status?: number; data?: { error?: string } } };
       const status = axiosErr.response?.status;
       if (status === 422) return 'Invalid status transition. Please refresh and try again.';
       if (status === 409) return 'This action was already processed. Please refresh.';
       if (status === 401) return 'Your session has expired. Please log in again.';
-      return axiosErr.response?.data?.message || 'An error occurred';
+      return axiosErr.response?.data?.error || 'An error occurred';
     }
     return 'An unexpected error occurred';
   };

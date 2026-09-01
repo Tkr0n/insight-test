@@ -15,17 +15,11 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-export interface ApiError {
-  status: 'error';
-  message: string;
-  errors?: Array<{ path: string[]; message: string }>;
-}
-
-export const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus | null> = {
-  PENDING: 'IN_PROGRESS',
-  IN_PROGRESS: 'DONE',
-  DONE: 'ARCHIVED',
-  ARCHIVED: null,
+export const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  PENDING: ['IN_PROGRESS', 'ARCHIVED'],
+  IN_PROGRESS: ['DONE', 'ARCHIVED'],
+  DONE: ['ARCHIVED'],
+  ARCHIVED: [],
 };
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
