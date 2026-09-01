@@ -1,0 +1,11 @@
+{
+  "success": {
+    "AuthenticationResult": {
+      "IdToken": "mock-jwt-token-for-testing"
+    }
+  },
+  "wrongPassword": {
+    "__type": "NotAuthorizedException",
+    "message": "Incorrect username or password."
+  }
+}
