@@ -40,7 +40,7 @@ APP_CLIENT_ID=$(awslocal cognito-idp create-user-pool-client \
   --user-pool-id "$USER_POOL_ID" \
   --client-name "insightt-spa-client" \
   --generate-secret=false \
-  --explicit-auth-flows ALLOW_USER_SRP_AUTH ALLOW_REFRESH_TOKEN_AUTH \
+  --explicit-auth-flows ALLOW_USER_SRP_AUTH ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH \
   --prevent-user-existence-enabled \
   --supported-identity-providers COGNITO \
   --callback-urls "http://localhost:5173" \
@@ -48,11 +48,11 @@ APP_CLIENT_ID=$(awslocal cognito-idp create-user-pool-client \
   --token-validity-units '{
     "AccessToken": "hours",
     "IdToken": "hours",
-    "RefreshToken": "days"
+    "RefreshToken": "hours"
   }' \
   --access-token-validity 1 \
   --id-token-validity 1 \
-  --refresh-token-validity 30 \
+  --refresh-token-validity 24 \
   --query 'UserPoolClient.ClientId' \
   --output text)
 
