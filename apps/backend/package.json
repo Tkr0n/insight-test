@@ -20,6 +20,8 @@
     "express": "^4.21.0",
     "helmet": "^8.0.0",
     "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^4.1.0",
     "morgan": "^1.10.0",
     "prisma": "^5.22.0",
     "zod": "^4.5.4"
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20",
     "eslint": "^9",

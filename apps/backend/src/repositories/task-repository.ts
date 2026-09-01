@@ -1,5 +1,6 @@
 import { PrismaClient, Task, TaskStatus } from '@prisma/client';
 import { validateStateTransition } from '../use-cases/state-machine';
+import { AppError } from '../middlewares/error-handler';
 
 export interface CreateTaskInput {
   title: string;
@@ -51,7 +52,13 @@ export class TaskRepository implements ITaskRepository {
   async update(id: string, ownerId: string, data: UpdateTaskInput): Promise<Task> {
     const task = await this.findById(id, ownerId);
     if (!task) {
-      throw new Error('Task not found');
+      throw new AppError(404, 'Task not found');
+    }
+
+    if (task.status === 'DONE' || task.status === 'ARCHIVED') {
+      if (data.status || data.description) {
+        throw new AppError(422, 'Task is locked: cannot edit status or description of completed tasks');
+      }
     }
 
     if (data.status) {
@@ -65,8 +72,13 @@ export class TaskRepository implements ITaskRepository {
   }
 
   async delete(id: string, ownerId: string): Promise<void> {
-    await this.prisma.task.deleteMany({
-      where: { id, ownerId },
+    const task = await this.findById(id, ownerId);
+    if (!task) {
+      throw new AppError(404, 'Task not found');
+    }
+
+    await this.prisma.task.delete({
+      where: { id },
     });
   }
 
@@ -76,7 +88,6 @@ export class TaskRepository implements ITaskRepository {
     newStatus: string
   ): Promise<Task> {
     return this.prisma.$transaction(async (tx) => {
-      // Pessimistic lock: SELECT ... FOR UPDATE
       const lockedRows = await tx.$queryRaw<Task[]>`
         SELECT * FROM "Task"
         WHERE id = ${taskId}::uuid AND owner_id = ${ownerId}
@@ -84,15 +95,12 @@ export class TaskRepository implements ITaskRepository {
       `;
 
       if (lockedRows.length === 0) {
-        throw new Error('Task not found or access denied');
+        throw new AppError(404, 'Task not found or access denied');
       }
 
       const currentTask = lockedRows[0];
-
-      // Validate state transition against the locked row
       validateStateTransition(currentTask.status, newStatus);
 
-      // Update status with version increment for optimistic control
       return tx.task.update({
         where: { id: taskId },
         data: {

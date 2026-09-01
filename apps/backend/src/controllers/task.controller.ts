@@ -1,14 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { TaskRepository } from '../repositories/task-repository';
+import { MarkAsDoneUseCase } from '../use-cases/mark-as-done';
 import { createTaskSchema, updateTaskSchema, taskIdSchema } from '../validations/task';
 import { authenticate } from '../middlewares/auth';
 import { validate } from '../middlewares/validate';
-import { idempotency } from '../middlewares/idempotency';
+import { idempotency, withIdempotencyCheck } from '../middlewares/idempotency';
 import { AppError } from '../middlewares/error-handler';
 
 const router = Router();
 const taskRepo = new TaskRepository(prisma);
+const markAsDone = new MarkAsDoneUseCase(taskRepo);
 
 router.use(authenticate);
 
@@ -57,11 +59,10 @@ router.patch(
   idempotency,
   async (req: Request, res: Response) => {
     const taskId = req.params.id as string;
-    const task = await taskRepo.updateTaskStatusLocked(
-      taskId,
-      req.user!.sub,
-      'DONE'
-    );
+    await withIdempotencyCheck(req, res, async () => {
+      await markAsDone.execute({ taskId, ownerId: req.user!.sub });
+    });
+    const task = await taskRepo.findById(taskId, req.user!.sub);
     res.json({ data: task });
   }
 );
