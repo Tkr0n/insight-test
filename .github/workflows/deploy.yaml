@@ -1,4 +1,4 @@
-name: Distributed Multi-Arch Build
+name: Distributed Multi-Arch Build (GitHub Hosted)
 
 on:
   push:
@@ -9,7 +9,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # 1. ARM build on GitHub's native infrastructure
+  # 1. ARM build on GitHub's native ARM infrastructure
   build-arm:
     runs-on: ubuntu-24.04-arm
     permissions:
@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Convert repository name to lowercase (critical for GHCR)
+      # Convert repository name to lowercase
       - name: Set lowercase image name
         run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}/insightt-backend" >> $GITHUB_ENV
         
@@ -38,19 +38,18 @@ jobs:
           # Note the -arm64 suffix
           tags: ${{ env.IMAGE_NAME }}:latest-arm64
 
-  # 2. x86 build on your local self-hosted Windows machine
+  # 2. x86 build on GitHub's native standard infrastructure (amd64)
   build-amd64:
-    runs-on: self-hosted # Make sure Docker Desktop (WSL2) is running
+    runs-on: ubuntu-latest # <--- This is natively x86 (amd64)
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
       
-      # Enforce bash shell for the lowercase conversion command to work on Windows
+      # Convert repository name to lowercase
       - name: Set lowercase image name
         run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}/insightt-backend" >> $GITHUB_ENV
-        shell: bash
         
       - name: Login to GHCR
         uses: docker/login-action@v3
