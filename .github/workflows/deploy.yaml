@@ -7,8 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ format('{0}', toLowerCase(github.repository)) }}/insightt-backend
-  FRONTEND_IMAGE: ghcr.io/${{ format('{0}', toLowerCase(github.repository)) }}/insightt-frontend
 
 jobs:
   build-and-push:
@@ -20,6 +18,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # 1. El truco de Bash para las minúsculas (Crítico para GHCR)
+      - name: Set lowercase image names
+        run: |
+          echo "BACKEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/insightt-backend" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/insightt-frontend" >> $GITHUB_ENV
+
+      # 2. Emulador necesario para compilar hacia la Raspberry Pi (arm64)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
