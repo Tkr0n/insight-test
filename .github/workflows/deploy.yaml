@@ -105,7 +105,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - format: lowercase
       - uses: actions/checkout@v4
       - name: Set lowercase image name
         run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}/insightt-frontend" >> $GITHUB_ENV
