@@ -3,8 +3,11 @@ import { ZodSchema } from 'zod';
 
 export function validate(schema: ZodSchema, source: 'body' | 'params' | 'query' = 'body') {
   return (req: Request, _res: Response, next: NextFunction): void => {
-    const data = schema.parse(req[source]);
-    req[source] = data;
+    const result = schema.safeParse(req[source]);
+    if (!result.success) {
+      throw result.error;
+    }
+    req[source] = result.data;
     next();
   };
 }

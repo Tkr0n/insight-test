@@ -1,6 +1,6 @@
 import { PrismaClient, Task, TaskStatus } from '@prisma/client';
-import { validateStateTransition } from '../use-cases/state-machine';
-import { AppError } from '../middlewares/error-handler';
+import { validateStateTransition, TaskStatus as StateStatus } from '../use-cases/state-machine.js';
+import { AppError } from '../middlewares/error-handler.js';
 
 export interface CreateTaskInput {
   title: string;
@@ -62,7 +62,7 @@ export class TaskRepository implements ITaskRepository {
     }
 
     if (data.status) {
-      validateStateTransition(task.status, data.status);
+      validateStateTransition(task.status, data.status as StateStatus);
     }
 
     return this.prisma.task.update({
@@ -99,7 +99,7 @@ export class TaskRepository implements ITaskRepository {
       }
 
       const currentTask = lockedRows[0];
-      validateStateTransition(currentTask.status, newStatus);
+      validateStateTransition(currentTask.status, newStatus as StateStatus);
 
       return tx.task.update({
         where: { id: taskId },

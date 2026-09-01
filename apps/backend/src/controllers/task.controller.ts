@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../config/prisma';
-import { TaskRepository } from '../repositories/task-repository';
-import { MarkAsDoneUseCase } from '../use-cases/mark-as-done';
-import { createTaskSchema, updateTaskSchema, taskIdSchema } from '../validations/task';
-import { authenticate } from '../middlewares/auth';
-import { validate } from '../middlewares/validate';
-import { idempotency, withIdempotencyCheck } from '../middlewares/idempotency';
-import { AppError } from '../middlewares/error-handler';
+import { prisma } from '../config/prisma.js';
+import { TaskRepository } from '../repositories/task-repository.js';
+import { MarkAsDoneUseCase } from '../use-cases/mark-as-done.js';
+import { createTaskSchema, updateTaskSchema, taskIdSchema } from '../validations/task.js';
+import { authenticate } from '../middlewares/auth.js';
+import { validate } from '../middlewares/validate.js';
+import { idempotency, withIdempotencyCheck } from '../middlewares/idempotency.js';
+import { AppError } from '../middlewares/error-handler.js';
 
 const router = Router();
 const taskRepo = new TaskRepository(prisma);

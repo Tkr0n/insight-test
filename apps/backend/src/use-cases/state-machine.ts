@@ -1,42 +1,24 @@
 import { TaskStatus } from '@prisma/client';
 
+export type { TaskStatus };
+
+export const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  PENDING: ['IN_PROGRESS', 'ARCHIVED'],
+  IN_PROGRESS: ['DONE', 'ARCHIVED'],
+  DONE: ['ARCHIVED'],
+  ARCHIVED: [],
+};
+
 export class InvalidStateTransitionError extends Error {
-  constructor(
-    public readonly currentStatus: string,
-    public readonly targetStatus: string
-  ) {
-    super(
-      `Invalid state transition: ${currentStatus} -> ${targetStatus}. ` +
-        `Allowed transitions from ${currentStatus}: ${VALID_TRANSITIONS[currentStatus as TaskStatus]?.join(', ') ?? 'none'}.`
-    );
+  constructor(from: string, to: string) {
+    super(`Invalid state transition: ${from} → ${to}`);
     this.name = 'InvalidStateTransitionError';
   }
 }
 
-const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  PENDING: [TaskStatus.IN_PROGRESS, TaskStatus.ARCHIVED],
-  IN_PROGRESS: [TaskStatus.DONE, TaskStatus.ARCHIVED],
-  DONE: [TaskStatus.ARCHIVED],
-  ARCHIVED: [],
-};
-
-export function canTransition(from: TaskStatus, to: TaskStatus): boolean {
-  return VALID_TRANSITIONS[from].includes(to);
-}
-
-export function getValidTransitions(status: TaskStatus): TaskStatus[] {
-  return VALID_TRANSITIONS[status];
-}
-
-export function validateStateTransition(
-  currentStatus: string,
-  newStatus: string
-): void {
-  const valid = canTransition(
-    currentStatus as TaskStatus,
-    newStatus as TaskStatus
-  );
-  if (!valid) {
-    throw new InvalidStateTransitionError(currentStatus, newStatus);
+export function validateStateTransition(from: TaskStatus, to: TaskStatus): void {
+  const allowed = VALID_TRANSITIONS[from];
+  if (!allowed.includes(to)) {
+    throw new InvalidStateTransitionError(from, to);
   }
 }

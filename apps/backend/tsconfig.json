@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -13,11 +13,7 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "baseUrl": "."
+    "sourceMap": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

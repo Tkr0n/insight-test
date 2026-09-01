@@ -1,7 +1,7 @@
 import { InvokeCommand } from '@aws-sdk/client-lambda';
-import { lambdaClient } from '../config/aws';
-import { TaskRepository } from '../repositories/task-repository';
-import { AppError } from '../middlewares/error-handler';
+import { lambdaClient } from '../config/aws.js';
+import { TaskRepository } from '../repositories/task-repository.js';
+import { AppError } from '../middlewares/error-handler.js';
 
 interface MarkAsDoneInput {
   taskId: string;

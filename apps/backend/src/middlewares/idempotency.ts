@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { redis } from '../config/redis';
-import { AppError } from './error-handler';
+import { redis } from '../config/redis.js';
+import { AppError } from './error-handler.js';
 
 const IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
 

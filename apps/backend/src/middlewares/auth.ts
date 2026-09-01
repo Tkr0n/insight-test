@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
-import { env } from '../config/env';
-import { AppError } from './error-handler';
+import { env } from '../config/env.js';
+import { AppError } from './error-handler.js';
 
 export interface AuthPayload {
   sub: string;
