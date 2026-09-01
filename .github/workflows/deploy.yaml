@@ -7,8 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/${{ github.repository }}/insightt-backend
-  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/insightt-frontend
+  BACKEND_IMAGE: ghcr.io/${{ format('{0}', toLowerCase(github.repository)) }}/insightt-backend
+  FRONTEND_IMAGE: ghcr.io/${{ format('{0}', toLowerCase(github.repository)) }}/insightt-frontend
 
 jobs:
   build-and-push:
