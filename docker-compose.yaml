@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   frontend:
-    image: ghcr.io/${REPO_OWNER:-tkr0n}/insightt-frontend:latest
+    image: ghcr.io/${REPO_OWNER:-tkr0n}/insight-test/insightt-frontend:latest
     container_name: insightt_frontend
     restart: unless-stopped
     ports:
@@ -13,7 +13,7 @@ services:
       - insightt_network
 
   backend:
-    image: ghcr.io/${REPO_OWNER:-tkr0n}/insightt-backend:latest
+    image: ghcr.io/${REPO_OWNER:-tkr0n}/insight-test/insightt-backend:latest
     container_name: insightt_backend
     restart: unless-stopped
     ports:
