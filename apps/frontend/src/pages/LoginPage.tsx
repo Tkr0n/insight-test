@@ -28,7 +28,10 @@ export function LoginPage() {
         `https://cognito-idp.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-amz-json-1.1' },
+          headers: {
+            'Content-Type': 'application/x-amz-json-1.1',
+            'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+          },
           body: JSON.stringify({
             AuthParameters: {
               USERNAME: email,
