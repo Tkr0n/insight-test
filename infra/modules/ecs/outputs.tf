@@ -27,3 +27,8 @@ output "backend_url" {
   description = "Backend API URL"
   value       = "http://${aws_lb.main.dns_name}/api"
 }
+
+output "task_role_arn" {
+  description = "ECS task role ARN (runtime AWS API calls)"
+  value       = aws_iam_role.task.arn
+}

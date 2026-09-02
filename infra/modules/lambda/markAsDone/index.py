@@ -1,31 +1,20 @@
 import json
 import os
-import redis
 import psycopg2
 from datetime import datetime
 
 
 def lambda_handler(event, context):
-    task_id = event.get("pathParameters", {}).get("id")
-    idempotency_key = event.get("headers", {}).get("Idempotency-Key")
-    user_id = event.get("requestContext", {}).get("authorizer", {}).get("claims", {}).get("sub")
+    task_id = event.get("taskId")
+    user_id = event.get("ownerId")
+    current_status = event.get("currentStatus")
 
     if not task_id:
         return response(400, {"error": "Task ID is required"})
-    if not idempotency_key:
-        return response(400, {"error": "Idempotency-Key header is required"})
     if not user_id:
         return response(401, {"error": "Unauthorized"})
-
-    r = redis.Redis(
-        host=os.environ["REDIS_ENDPOINT"],
-        port=int(os.environ["REDIS_PORT"]),
-        decode_responses=True,
-    )
-
-    lock_key = f"idempotency:{idempotency_key}"
-    if not r.set(lock_key, "1", nx=True, ex=300):
-        return response(409, {"error": "Duplicate request"})
+    if current_status != "IN_PROGRESS":
+        return response(422, {"error": f"Invalid state transition: {current_status} → DONE"})
 
     conn = psycopg2.connect(
         host=os.environ["RDS_ENDPOINT"],
@@ -40,7 +29,7 @@ def lambda_handler(event, context):
         cur.execute(
             """
             WITH locked_task AS (
-                SELECT id, title, status
+                SELECT id
                 FROM tasks
                 WHERE id = %s AND owner_id = %s
                 FOR UPDATE
@@ -57,7 +46,6 @@ def lambda_handler(event, context):
         conn.commit()
 
         if not row:
-            r.delete(lock_key)
             return response(404, {"error": "Task not found"})
 
         return response(200, {
@@ -68,10 +56,8 @@ def lambda_handler(event, context):
         })
     except Exception as e:
         conn.rollback()
-        r.delete(lock_key)
         return response(500, {"error": str(e)})
     finally:
-        cur.close()
         conn.close()
 
 

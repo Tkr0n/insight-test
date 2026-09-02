@@ -108,6 +108,7 @@ module "ecs" {
     DATABASE_URL           = "postgresql://${var.db_user}:${var.db_password}@${module.rds.hostname}:${module.rds.port}/${var.db_name}"
     REDIS_URL              = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
     AWS_REGION             = var.aws_region
+    LAMBDA_FUNCTION_NAME   = "${var.project_name}-markAsDone"
     COGNITO_USER_POOL_ID   = module.cognito.user_pool_id
     COGNITO_CLIENT_ID      = module.cognito.client_id
     NODE_ENV               = "production"
@@ -116,4 +117,19 @@ module "ecs" {
     CSRF_SECRET            = var.csrf_secret
     COOKIE_SECURE          = "true"
   }
+}
+
+resource "aws_iam_role_policy" "backend_lambda_invoke" {
+  name   = "${var.project_name}-backend-invoke-lambda"
+  role   = module.ecs.task_role_arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "lambda:InvokeFunction"
+        Resource = module.lambda.function_arn
+      },
+    ]
+  })
 }

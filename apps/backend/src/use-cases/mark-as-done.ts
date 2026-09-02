@@ -1,7 +1,9 @@
 import { InvokeCommand } from '@aws-sdk/client-lambda';
 import { lambdaClient } from '../config/aws.js';
+import { env } from '../config/env.js';
 import { TaskRepository } from '../repositories/task-repository.js';
 import { AppError } from '../middlewares/error-handler.js';
+import { validateStateTransition } from './state-machine.js';
 
 interface MarkAsDoneInput {
   taskId: string;
@@ -17,6 +19,8 @@ export class MarkAsDoneUseCase {
       throw new AppError(404, 'Task not found');
     }
 
+    validateStateTransition(task.status, 'DONE');
+
     const payload = JSON.stringify({
       taskId: input.taskId,
       ownerId: input.ownerId,
@@ -24,7 +28,7 @@ export class MarkAsDoneUseCase {
     });
 
     const command = new InvokeCommand({
-      FunctionName: 'markAsDone',
+      FunctionName: env.LAMBDA_FUNCTION_NAME,
       Payload: Buffer.from(payload),
     });
 
