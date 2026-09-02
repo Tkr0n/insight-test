@@ -25,7 +25,10 @@ app.use(errorHandler);
 const PORT = env.PORT;
 
 async function start() {
-  await resolveCognitoConfig();
+  const cognitoConfig = await resolveCognitoConfig();
+  if (!cognitoConfig) {
+    console.warn('[server] Starting without Cognito — authentication will be disabled');
+  }
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

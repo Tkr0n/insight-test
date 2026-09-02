@@ -65,6 +65,12 @@ function verifyToken(token: string): Promise<jwt.JwtPayload> {
 }
 
 export async function authenticate(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  if (!env.COGNITO_USER_POOL_ID || !env.COGNITO_CLIENT_ID) {
+    console.warn('[auth] No Cognito config — skipping authentication');
+    next();
+    return;
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
