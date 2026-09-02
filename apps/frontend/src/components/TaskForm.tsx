@@ -12,9 +12,14 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  Box,
+  Typography,
+  Chip,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { TagInput } from './TagInput';
 import { useUsers } from '../hooks/useUsers';
+import { PRIORITY_LABELS } from '../utils/priority';
 
 export interface TaskFormValues {
   title: string;
@@ -47,6 +52,8 @@ interface TaskFormProps {
   title?: string;
 }
 
+const PRIORITY_OPTIONS = [1, 2, 3, 4] as const;
+
 export function TaskForm({
   open,
   onClose,
@@ -55,9 +62,10 @@ export function TaskForm({
   initialValues = DEFAULT_VALUES,
   title = 'Create Task',
 }: TaskFormProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [values, setValues] = useState<TaskFormValues>(initialValues);
 
-  // Try to load users for assignee dropdown; fallback gracefully if hook fails
   let usersData: { id: string; email: string; name?: string }[] | undefined;
   let usersLoading = false;
   try {
@@ -78,7 +86,6 @@ export function TaskForm({
     (field: keyof TaskFormValues) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const raw = e.target.value;
-      // Normalize empty assigneeId to null for API consistency
       const next = field === 'assigneeId' && raw === '' ? null : raw;
       setValues((prev) => ({ ...prev, [field]: next }));
     };
@@ -117,11 +124,25 @@ export function TaskForm({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            bgcolor: isDark ? '#1e293b' : '#ffffff',
+            border: isDark ? '1px solid rgba(255,255,255,0.06)' : 'none',
+          },
+        },
+      }}
+    >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, pb: 0, fontSize: '1.15rem' }}>{title}</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack spacing={2.5} sx={{ mt: 2 }}>
             <TextField
               label="Title"
               value={values.title}
@@ -130,6 +151,7 @@ export function TaskForm({
               fullWidth
               autoFocus
               slotProps={{ htmlInput: { maxLength: 255 } }}
+              size="small"
             />
             <TextField
               label="Description"
@@ -138,10 +160,11 @@ export function TaskForm({
               multiline
               rows={3}
               fullWidth
+              size="small"
             />
 
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <FormControl fullWidth size="small">
                 <InputLabel id="urgency-label">Urgency</InputLabel>
                 <Select
                   labelId="urgency-label"
@@ -150,13 +173,14 @@ export function TaskForm({
                   value={values.urgency}
                   onChange={handleSelectChange('urgency')}
                 >
-                  <MenuItem value={1}>1</MenuItem>
-                  <MenuItem value={2}>2</MenuItem>
-                  <MenuItem value={3}>3</MenuItem>
-                  <MenuItem value={4}>4</MenuItem>
+                  {PRIORITY_OPTIONS.map((v) => (
+                    <MenuItem key={v} value={v}>
+                      {PRIORITY_LABELS[v]}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth>
+              <FormControl fullWidth size="small">
                 <InputLabel id="importance-label">Importance</InputLabel>
                 <Select
                   labelId="importance-label"
@@ -165,21 +189,44 @@ export function TaskForm({
                   value={values.importance}
                   onChange={handleSelectChange('importance')}
                 >
-                  <MenuItem value={1}>1</MenuItem>
-                  <MenuItem value={2}>2</MenuItem>
-                  <MenuItem value={3}>3</MenuItem>
-                  <MenuItem value={4}>4</MenuItem>
+                  {PRIORITY_OPTIONS.map((v) => (
+                    <MenuItem key={v} value={v}>
+                      {PRIORITY_LABELS[v]}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Stack>
 
-            <Stack direction="row" spacing={2}>
+            {/* Pill preview */}
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Chip
+                label={PRIORITY_LABELS[values.urgency]}
+                size="small"
+                sx={{ fontSize: '0.7rem', fontWeight: 600 }}
+                color={values.urgency >= 4 ? 'error' : values.urgency === 3 ? 'warning' : 'default'}
+                variant={values.urgency >= 3 ? 'filled' : 'outlined'}
+              />
+              <Chip
+                label={PRIORITY_LABELS[values.importance]}
+                size="small"
+                sx={{ fontSize: '0.7rem', fontWeight: 600 }}
+                color={values.importance >= 4 ? 'error' : values.importance === 3 ? 'warning' : 'default'}
+                variant={values.importance >= 3 ? 'filled' : 'outlined'}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center', ml: 0.5 }}>
+                Preview
+              </Typography>
+            </Box>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 label="Start Date"
                 type="date"
                 value={values.startDate ?? ''}
                 onChange={handleDateChange('startDate')}
                 fullWidth
+                size="small"
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
@@ -188,6 +235,7 @@ export function TaskForm({
                 value={values.dueDate ?? ''}
                 onChange={handleDateChange('dueDate')}
                 fullWidth
+                size="small"
                 error={Boolean(dateError)}
                 helperText={dateError ? 'Due date cannot be before start date' : undefined}
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -203,7 +251,7 @@ export function TaskForm({
 
             {usersData !== undefined || !usersLoading ? (
               usersData ? (
-                <FormControl fullWidth>
+                <FormControl fullWidth size="small">
                   <InputLabel id="assignee-label">Assignee</InputLabel>
                   <Select
                     labelId="assignee-label"
@@ -229,6 +277,7 @@ export function TaskForm({
                   value={values.assigneeId ?? ''}
                   onChange={handleChange('assigneeId')}
                   fullWidth
+                  size="small"
                   placeholder="Enter assignee user ID"
                   helperText="User list unavailable — enter ID manually"
                 />
@@ -239,20 +288,22 @@ export function TaskForm({
                 value={values.assigneeId ?? ''}
                 onChange={handleChange('assigneeId')}
                 fullWidth
+                size="small"
                 placeholder="Loading users..."
                 disabled
               />
             )}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={isLoading}>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={onClose} disabled={isLoading} sx={{ borderRadius: 2 }}>
             Cancel
           </Button>
           <Button
             type="submit"
             variant="contained"
             disabled={isLoading || !values.title.trim() || Boolean(dateError)}
+            sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}
           >
             {isLoading ? 'Saving...' : 'Save'}
           </Button>

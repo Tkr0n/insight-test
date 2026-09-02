@@ -14,8 +14,10 @@ import {
   Typography,
   OutlinedInput,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { useUsers } from '../hooks/useUsers';
 import type { TaskFilters, TaskStatus } from '../types/task';
+import { PRIORITY_LABELS } from '../utils/priority';
 
 const STATUS_OPTIONS: TaskStatus[] = ['PENDING', 'IN_PROGRESS', 'DONE', 'ARCHIVED'];
 
@@ -27,16 +29,16 @@ interface FilterPanelProps {
 }
 
 export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: FilterPanelProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { data: users } = useUsers();
   const userOptions = users ?? [];
 
-  // Resolve selected user object for single-select Autocomplete
   const selectedUser =
     filters.assigneeId != null
       ? (userOptions.find((u) => u.id === filters.assigneeId) ?? null)
       : null;
 
-  // Active filter chips helpers
   const activeChips: { label: string; onDelete: () => void }[] = [];
 
   if (filters.title) {
@@ -66,13 +68,13 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
   }
   if (filters.urgency !== undefined) {
     activeChips.push({
-      label: `urgency: ${filters.urgency}`,
+      label: `urgency: ${PRIORITY_LABELS[filters.urgency]}`,
       onDelete: () => onChange({ ...filters, urgency: undefined }),
     });
   }
   if (filters.importance !== undefined) {
     activeChips.push({
-      label: `importance: ${filters.importance}`,
+      label: `importance: ${PRIORITY_LABELS[filters.importance]}`,
       onDelete: () => onChange({ ...filters, importance: undefined }),
     });
   }
@@ -119,13 +121,22 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
   }
 
   return (
-    <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 2 }}>
+    <Box
+      sx={{
+        p: 2.5,
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
+        borderRadius: 3,
+        mb: 2.5,
+        bgcolor: isDark ? '#1e293b' : '#ffffff',
+        boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 1px 3px rgba(15,23,42,0.06)',
+      }}
+    >
       <Stack spacing={2}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
           Filters
         </Typography>
 
-        {/* Row 1: title + assignee + tags */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             placeholder="Search title"
@@ -179,9 +190,8 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
           />
         </Stack>
 
-        {/* Row 2: urgency, importance, status */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 160, flex: 1 }}>
             <InputLabel id="filter-urgency-label">Urgency</InputLabel>
             <Select
               labelId="filter-urgency-label"
@@ -195,14 +205,15 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
               <MenuItem value="">
                 <em>All</em>
               </MenuItem>
-              <MenuItem value={1}>1</MenuItem>
-              <MenuItem value={2}>2</MenuItem>
-              <MenuItem value={3}>3</MenuItem>
-              <MenuItem value={4}>4</MenuItem>
+              {[1, 2, 3, 4].map((v) => (
+                <MenuItem key={v} value={v}>
+                  {PRIORITY_LABELS[v]}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 140, flex: 1 }}>
+          <FormControl size="small" sx={{ minWidth: 160, flex: 1 }}>
             <InputLabel id="filter-importance-label">Importance</InputLabel>
             <Select
               labelId="filter-importance-label"
@@ -216,10 +227,11 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
               <MenuItem value="">
                 <em>All</em>
               </MenuItem>
-              <MenuItem value={1}>1</MenuItem>
-              <MenuItem value={2}>2</MenuItem>
-              <MenuItem value={3}>3</MenuItem>
-              <MenuItem value={4}>4</MenuItem>
+              {[1, 2, 3, 4].map((v) => (
+                <MenuItem key={v} value={v}>
+                  {PRIORITY_LABELS[v]}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -255,11 +267,10 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
               />
             }
             label="Overdue"
-            sx={{ minWidth: 120 }}
+            sx={{ minWidth: 110 }}
           />
         </Stack>
 
-        {/* Row 3: date ranges */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             label="Start from"
@@ -299,20 +310,19 @@ export function FilterPanel({ filters, onChange, onClear, availableTags = [] }: 
           />
         </Stack>
 
-        {/* Active filters chips + clear */}
         {activeChips.length > 0 && (
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
             {activeChips.map((chip) => (
               <Chip key={chip.label} label={chip.label} onDelete={chip.onDelete} size="small" />
             ))}
-            <Button variant="outlined" size="small" onClick={onClear} sx={{ ml: 1 }}>
+            <Button variant="outlined" size="small" onClick={onClear} sx={{ ml: 1, borderRadius: 2 }}>
               Clear
             </Button>
           </Stack>
         )}
         {activeChips.length === 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant="outlined" size="small" onClick={onClear}>
+            <Button variant="outlined" size="small" onClick={onClear} sx={{ borderRadius: 2 }}>
               Clear
             </Button>
           </Box>

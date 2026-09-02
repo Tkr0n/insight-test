@@ -59,7 +59,7 @@ describe('FilterPanel', () => {
 
     await user.click(urgencyCombo);
     const listbox = await screen.findByRole('listbox');
-    const option = within(listbox).getByText('1');
+    const option = within(listbox).getByText('Non Critical');
     await user.click(option);
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ urgency: 1 }));
@@ -79,8 +79,8 @@ describe('FilterPanel', () => {
     // need to re-render with user? just check select exists
     await user.click(importanceCombo);
     const listbox = await screen.findByRole('listbox');
-    expect(within(listbox).getByText('1')).toBeInTheDocument();
-    expect(within(listbox).getByText('4')).toBeInTheDocument();
+    expect(within(listbox).getByText('Non Critical')).toBeInTheDocument();
+    expect(within(listbox).getByText('Critical')).toBeInTheDocument();
   });
 
   it('overdue checkbox toggle llama onChange con overdue true', async () => {

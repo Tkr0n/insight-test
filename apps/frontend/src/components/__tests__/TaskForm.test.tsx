@@ -41,7 +41,7 @@ describe('TaskForm', () => {
     await user.click(urgencyCombo);
     const listbox = await screen.findByRole('listbox');
     const optionsUrgency = within(listbox).getAllByRole('option');
-    expect(optionsUrgency.map((o) => o.textContent)).toEqual(expect.arrayContaining(['1', '2', '3', '4']));
+    expect(optionsUrgency.map((o) => o.textContent)).toEqual(expect.arrayContaining(['Non Critical', 'Moderate', 'Important', 'Critical']));
     // Close by pressing Escape
     await user.keyboard('{Escape}');
 
@@ -50,7 +50,7 @@ describe('TaskForm', () => {
     await user.click(importanceCombo);
     const listbox2 = await screen.findByRole('listbox');
     const optionsImportance = within(listbox2).getAllByRole('option');
-    expect(optionsImportance.map((o) => o.textContent)).toEqual(expect.arrayContaining(['1', '2', '3', '4']));
+    expect(optionsImportance.map((o) => o.textContent)).toEqual(expect.arrayContaining(['Non Critical', 'Moderate', 'Important', 'Critical']));
     await user.keyboard('{Escape}');
   });
 
@@ -108,17 +108,17 @@ describe('TaskForm', () => {
     await user.type(startInput, '2026-06-01');
     await user.type(dueInput, '2026-06-10');
 
-    // Urgency -> 4
+    // Urgency -> 4 (Critical)
     const urgencyCombo = screen.getByLabelText(/Urgency/i);
     await user.click(urgencyCombo);
     const listboxUrg = await screen.findByRole('listbox');
-    await user.click(within(listboxUrg).getByRole('option', { name: '4' }));
+    await user.click(within(listboxUrg).getByRole('option', { name: 'Critical' }));
 
-    // Importance -> 3
+    // Importance -> 3 (Important)
     const importanceCombo = screen.getByLabelText(/Importance/i);
     await user.click(importanceCombo);
     const listboxImp = await screen.findByRole('listbox');
-    await user.click(within(listboxImp).getByRole('option', { name: '3' }));
+    await user.click(within(listboxImp).getByRole('option', { name: 'Important' }));
 
     // Tags
     const tagInput = screen.getByPlaceholderText(/Add tag/i);

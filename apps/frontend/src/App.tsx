@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ColorModeProvider } from './theme/ColorModeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,17 +15,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#1976d2' },
-    secondary: { main: '#dc004e' },
-  },
-});
-
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  // With httpOnly cookie, frontend cannot read token directly.
-  // Keep lightweight check via localStorage fallback or csrf cookie presence.
-  // Actual auth is validated by backend (401 -> axios interceptor redirects).
   const hasSession = document.cookie.includes('csrf_token') || !!localStorage.getItem('id_token');
   if (!hasSession) {
     return <Navigate to="/login" replace />;
@@ -37,8 +27,7 @@ export function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+        <ColorModeProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
@@ -53,7 +42,7 @@ export function App() {
               <Route path="*" element={<Navigate to="/tasks" replace />} />
             </Routes>
           </BrowserRouter>
-        </ThemeProvider>
+        </ColorModeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

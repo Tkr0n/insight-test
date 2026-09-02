@@ -8,8 +8,11 @@ import {
   Snackbar,
   Alert,
   Box,
+  Paper,
+  Chip,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { useTasks } from '../hooks/useTasks';
 import { useCreateTask } from '../hooks/useCreateTask';
 import { useUpdateTask } from '../hooks/useUpdateTask';
@@ -91,6 +94,7 @@ function buildSearchParams(filters: TaskFilters): URLSearchParams {
 }
 
 export function DashboardPage() {
+  const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [filters, setFilters] = useState<TaskFilters>(() => parseFilters(searchParams));
@@ -279,10 +283,52 @@ export function DashboardPage() {
         tags: [],
       };
 
+  const isDark = theme.palette.mode === 'dark';
+  const totalTasks = tasks?.length ?? 0;
+  const doneCount = tasks?.filter((t) => t.status === 'DONE' || t.status === 'ARCHIVED').length ?? 0;
+
   return (
     <Box>
-      <Stack direction="row" sx={{ mb: 3, justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4">My Tasks</Typography>
+      {/* Header bar */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: 2.5,
+          borderRadius: 3,
+          bgcolor: isDark ? '#1e293b' : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+            My Tasks
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ mt: 0.75, alignItems: 'center' }}>
+            <Chip
+              label={`${totalTasks} total`}
+              size="small"
+              sx={{
+                height: 22,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+                color: isDark ? '#cbd5e1' : '#475569',
+              }}
+            />
+            {totalTasks > 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                {doneCount} completed
+              </Typography>
+            )}
+          </Stack>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -290,10 +336,21 @@ export function DashboardPage() {
             setEditingTask(null);
             setFormOpen(true);
           }}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 700,
+            px: 2.5,
+            py: 1,
+            bgcolor: '#4f46e5',
+            '&:hover': { bgcolor: '#4338ca' },
+            boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
+            alignSelf: { xs: 'stretch', sm: 'auto' },
+          }}
         >
           New Task
         </Button>
-      </Stack>
+      </Paper>
 
       <FilterPanel
         filters={filters}
@@ -307,15 +364,42 @@ export function DashboardPage() {
       {isLoading && (
         <Stack spacing={2}>
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} variant="rounded" height={100} />
+            <Skeleton key={i} variant="rounded" height={100} sx={{ borderRadius: 3 }} />
           ))}
         </Stack>
       )}
 
       {!isLoading && tasks && tasks.length === 0 && (
-        <Typography align="center" color="text.secondary" sx={{ py: 8 }}>
-          No tasks yet. Create your first task to get started.
-        </Typography>
+        <Paper
+          elevation={0}
+          sx={{
+            py: 8,
+            px: 4,
+            textAlign: 'center',
+            borderRadius: 3,
+            border: '1px dashed',
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+            bgcolor: isDark ? 'rgba(30,41,59,0.5)' : '#f8fafc',
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            No tasks yet
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+            Create your first task to get started and organize your work.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setEditingTask(null);
+              setFormOpen(true);
+            }}
+            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, bgcolor: '#4f46e5' }}
+          >
+            Create task
+          </Button>
+        </Paper>
       )}
 
       {!isLoading && tasks && tasks.length > 0 && (
@@ -329,9 +413,6 @@ export function DashboardPage() {
           onTransition={handleTransition}
         />
       )}
-
-      {/* Keep transitioning/deleting states wired via Kanban columns? Card doesn't expose them directly but transition handled via snackbar */}
-      {/* Hidden state holders for compatibility: transitioningId/deletingId affect TaskCard via KanbanColumn if needed in future */}
 
       <TaskForm
         open={formOpen}
@@ -352,8 +433,6 @@ export function DashboardPage() {
         currentUserId={currentUserId}
       />
 
-      {/* Expose deleting/transitioning via hidden consumers if needed - currently Snackbar handles feedback */}
-
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -365,7 +444,6 @@ export function DashboardPage() {
         </Alert>
       </Snackbar>
 
-      {/* Hidden elements to satisfy unused vars lint if strict */}
       <Box sx={{ display: 'none' }} data-testid="transitioning-state" data-value={transitioningId ?? ''} />
       <Box sx={{ display: 'none' }} data-testid="deleting-state" data-value={deletingId ?? ''} />
     </Box>
