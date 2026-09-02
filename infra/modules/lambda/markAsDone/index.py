@@ -16,9 +16,11 @@ def lambda_handler(event, context):
     if current_status != "IN_PROGRESS":
         return response(422, {"error": f"Invalid state transition: {current_status} → DONE"})
 
+    endpoint = os.environ["RDS_ENDPOINT"]
+    db_host, _, db_port = endpoint.partition(":")
     conn = psycopg2.connect(
-        host=os.environ["RDS_ENDPOINT"],
-        port=os.environ["RDS_PORT"],
+        host=db_host,
+        port=db_port or os.environ["RDS_PORT"],
         dbname=os.environ["RDS_DB_NAME"],
         user=os.environ["RDS_DB_USER"],
         password=os.environ["RDS_DB_PASSWORD"],
@@ -69,5 +71,5 @@ def response(status_code, body):
     return {
         "statusCode": status_code,
         "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(body),
+        "body": json.dumps(body, default=str),
     }
