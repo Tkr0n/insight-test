@@ -133,6 +133,10 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest-arm64
+          build-args: |
+            VITE_AWS_REGION=us-east-2
+            VITE_COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
+            VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
 
   build-frontend-amd64:
     needs: [test-frontend]
@@ -157,6 +161,10 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest-amd64
+          build-args: |
+            VITE_AWS_REGION=us-east-2
+            VITE_COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
+            VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
 
   merge-frontend:
     needs: [build-frontend-arm, build-frontend-amd64]
