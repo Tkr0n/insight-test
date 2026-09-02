@@ -75,3 +75,9 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+# AWS Lambda deployment package (generated)
+infra/modules/lambda/markAsDone/psycopg2/
+infra/modules/lambda/markAsDone/redis/
+infra/modules/lambda/markAsDone/*.dist-info/
+infra/modules/lambda/markAsDone/*.libs/
+infra/modules/lambda/markAsDone.zip

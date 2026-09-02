@@ -78,10 +78,18 @@ resource "null_resource" "lambda_package" {
   triggers = {
     requirements = filemd5("${path.module}/markAsDone/requirements.txt")
     handler      = filemd5("${path.module}/markAsDone/index.py")
+    # Force the dependency install on every apply: the installed packages are
+    # gitignored, so a fresh CI checkout would otherwise zip a package without
+    # psycopg2. The rebuilt wheels are deterministic, so the final zip hash
+    # (and thus the Lambda update) still only changes with the source.
+    build = timestamp()
   }
 
   provisioner "local-exec" {
-    command = "cd ${path.module}/markAsDone && pip install -r requirements.txt -t . --quiet"
+    # Build the runtime dependencies for the Lambda's Python 3.12 runtime with
+    # Docker (python:3.12-slim) so the wheels match the runtime and the build
+    # does not depend on the host's pip/python version.
+    command = "cd ${path.module}/markAsDone && docker run --rm -v \"$PWD:/pkg\" -w /pkg python:3.12-slim sh -c 'pip install --no-cache-dir -r requirements.txt -t . --quiet'"
   }
 }
 
@@ -89,6 +97,8 @@ data "archive_file" "lambda" {
   type        = "zip"
   source_dir  = "${path.module}/markAsDone"
   output_path = "${path.module}/markAsDone.zip"
+
+  depends_on = [null_resource.lambda_package]
 }
 
 resource "aws_lambda_function" "markAsDone" {
