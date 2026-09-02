@@ -12,3 +12,8 @@ output "user_pool_arn" {
   description = "Cognito User Pool ARN"
   value       = aws_cognito_user_pool.main.arn
 }
+
+output "test_users_info" {
+  description = "Test user credentials"
+  value       = "test@insightt.com / admin@insightt.com — password: TestPass123"
+}

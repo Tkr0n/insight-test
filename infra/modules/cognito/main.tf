@@ -70,3 +70,40 @@ resource "aws_cognito_user_pool_client" "spa" {
   id_token_validity      = 1
   refresh_token_validity = 24
 }
+
+resource "null_resource" "test_users" {
+  for_each = toset(["test@insightt.com", "admin@insightt.com"])
+
+  triggers = {
+    user_pool_id = aws_cognito_user_pool.main.id
+    app_client_id = aws_cognito_user_pool_client.spa.id
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["powershell", "-Command"]
+    command = <<-EOT
+      $ErrorActionPreference = "SilentlyContinue"
+
+      # Sign up
+      aws cognito-idp sign-up `
+        --client-id "${aws_cognito_user_pool_client.spa.id}" `
+        --username "${each.key}" `
+        --password "TestPass123" `
+        --user-attributes "Name=email,Value=${each.key}" "Name=name,Value=Test User" `
+        --region "${var.aws_region}"
+
+      # Auto-confirm
+      aws cognito-idp admin-confirm-sign-up `
+        --user-pool-id "${aws_cognito_user_pool.main.id}" `
+        --username "${each.key}" `
+        --region "${var.aws_region}"
+
+      Write-Host "User ${each.key} created/confirmed"
+    EOT
+  }
+
+  depends_on = [
+    aws_cognito_user_pool.main,
+    aws_cognito_user_pool_client.spa,
+  ]
+}

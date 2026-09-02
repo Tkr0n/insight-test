@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project name for resource naming"
   type        = string
-  default     = "insightt"
+  default     = "insight-test"
 }
 
 variable "db_password" {
@@ -19,11 +19,11 @@ variable "db_password" {
 variable "db_name" {
   description = "Database name"
   type        = string
-  default     = "insightt_db"
+  default     = "insight_test_db"
 }
 
 variable "db_user" {
   description = "Database user"
   type        = string
-  default     = "insightt_user"
+  default     = "insight_test_user"
 }
