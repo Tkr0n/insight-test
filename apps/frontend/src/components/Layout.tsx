@@ -39,6 +39,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useColorMode } from '../theme/ColorModeContext';
 import { apiClient } from '../api/axios-client';
+import { DIAGRAMS } from '../pages/DocumentationPage';
 
 function NavButton({
   label,
@@ -107,9 +108,16 @@ export function Layout({ children }: LayoutProps) {
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
 
-  const openDocsDiagram = (diagram: string) => {
+  const openDocsDiagram = (diagramId: string) => {
     setDocsAnchor(null);
-    window.open(`/docs?diagram=${diagram}`, '_blank');
+    const file = DIAGRAMS.find((d) => d.id === diagramId)?.file;
+    if (file) window.open(`/docs/diagrams/${encodeURIComponent(file)}`, '_blank');
+  };
+
+  const openDrawerDiagram = (diagramId: string) => {
+    setDrawerOpen(false);
+    const file = DIAGRAMS.find((d) => d.id === diagramId)?.file;
+    if (file) window.open(`/docs/diagrams/${encodeURIComponent(file)}`, '_blank');
   };
 
   return (
@@ -371,7 +379,7 @@ export function Layout({ children }: LayoutProps) {
                 ['Task Lifecycle', 'task-lifecycle'],
                 ['Kanban Flow', 'kanban-flow'],
               ].map(([label, diagram]) => (
-                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); window.open(`/docs?diagram=${diagram}`, '_blank'); }}>
+                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => openDrawerDiagram(diagram)}>
                   <ListItemText primary={label} />
                 </ListItemButton>
               ))}

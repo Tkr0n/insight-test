@@ -55,7 +55,7 @@ interface DiagramItem {
   color: string;
 }
 
-const DIAGRAMS: DiagramItem[] = [
+export const DIAGRAMS: DiagramItem[] = [
   { id: 'system.architecture', title: 'System Architecture', desc: 'Components, boundaries and connections', file: 'system.architecture.html', color: '#4f46e5' },
   { id: 'auth-flow', title: 'Auth Flow (Sequence)', desc: 'httpOnly + CSRF double-submit', file: 'auth-flow.sequence.html', color: '#0891b2' },
   { id: 'request-flow', title: 'Request Flow (Sequence)', desc: 'markAsDone: SETNX + Lambda FOR UPDATE', file: 'request-flow.sequence.html', color: '#e11d48' },
