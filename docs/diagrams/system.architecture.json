@@ -37,9 +37,9 @@
     { "id": "lambda-pg", "from": "lambda", "to": "postgres", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "right", "toSide": "left" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Frontend", "items": ["React + Vite + TypeScript", "Material UI components", "React Query for data fetching"] },
-    { "dot": "emerald", "title": "Backend", "items": ["Express Clean Architecture", "Prisma ORM for PostgreSQL", "Zod validation middleware"] },
-    { "dot": "rose", "title": "Security", "items": ["AWS Cognito JWT authentication", "Ownership scoping (owner_id)", "Redis SETNX idempotency guard"] },
-    { "dot": "violet", "title": "Concurrency", "items": ["Pessimistic locking (FOR UPDATE)", "PgBouncer connection pooling", "Lambda externalized for markAsDone"] }
+    { "dot": "cyan", "title": "Frontend (2026-09)", "items": ["React + Vite + MUI, Centered Nav (Users/Docs) + Drawer", "Kanban: 4-col grid desktop / Accordion mobile + Fab", "Accent 10% bg columns, reversible state & Filters accordion"] },
+    { "dot": "emerald", "title": "Backend", "items": ["Express Clean Architecture (Controllers/UseCases/Repos)", "Prisma + Users CRUD (all/create/update/delete) + auth/me", "Reversible state machine + unlocked archive fix"] },
+    { "dot": "rose", "title": "Security", "items": ["Cognito httpOnly __Host-id_token + Double Submit CSRF", "Owner/Assignee/Shared matrix + GET /auth/me", "Redis SETNX idempotency guard"] },
+    { "dot": "violet", "title": "Concurrency & Docs", "items": ["Pessimistic locking (FOR UPDATE) + PgBouncer", "Lifecycle (reversible) + Kanban workflow (archify)", "DocumentationPage with colored MD cards + HTML previews"] }
   ]
 }

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -8,14 +8,35 @@ import {
   Box,
   IconButton,
   Tooltip,
+  Menu,
+  MenuItem,
+  Divider,
+  useMediaQuery,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Collapse,
 } from '@mui/material';
 import {
   Logout as LogoutIcon,
   LightMode as LightIcon,
   DarkMode as DarkIcon,
   TaskAlt as LogoIcon,
+  People as UsersIcon,
+  Description as DocsIcon,
+  ExpandMore as ExpandIcon,
+  Menu as MenuIcon,
+  Architecture as ArchIcon,
+  Schema as SchemaIcon,
+  Storage as InfraIcon,
+  BugReport as TestIcon,
+  Gavel as RulesIcon,
+  Hub as FlowIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 import { useColorMode } from '../theme/ColorModeContext';
 import { apiClient } from '../api/axios-client';
 
@@ -25,7 +46,16 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobileNav = useMediaQuery(theme.breakpoints.down('md'));
   const { mode, toggleMode } = useColorMode();
+
+  const [usersAnchor, setUsersAnchor] = useState<null | HTMLElement>(null);
+  const [docsAnchor, setDocsAnchor] = useState<null | HTMLElement>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerUsersOpen, setDrawerUsersOpen] = useState(false);
+  const [drawerDocsOpen, setDrawerDocsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -36,6 +66,40 @@ export function Layout({ children }: LayoutProps) {
     localStorage.removeItem('id_token');
     navigate('/login', { replace: true });
   };
+
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
+
+  const NavButton = ({
+    label,
+    active,
+    onClick,
+    icon,
+    hasMenu,
+  }: {
+    label: string;
+    active?: boolean;
+    onClick: (e: React.MouseEvent<HTMLElement>) => void;
+    icon: React.ReactNode;
+    hasMenu?: boolean;
+  }) => (
+    <Button
+      onClick={onClick}
+      startIcon={icon}
+      endIcon={hasMenu ? <ExpandIcon sx={{ fontSize: 16 }} /> : undefined}
+      sx={{
+        borderRadius: 2,
+        textTransform: 'none',
+        fontWeight: active ? 700 : 600,
+        color: active ? '#4f46e5' : mode === 'dark' ? '#cbd5e1' : '#475569',
+        bgcolor: active ? (mode === 'dark' ? 'rgba(79,70,229,0.15)' : '#eef2ff') : 'transparent',
+        px: 1.75,
+        py: 0.7,
+        '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
+      }}
+    >
+      {label}
+    </Button>
+  );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -49,8 +113,9 @@ export function Layout({ children }: LayoutProps) {
           color: mode === 'dark' ? '#f1f5f9' : '#0f172a',
         }}
       >
-        <Toolbar sx={{ gap: 1.5 }}>
+        <Toolbar sx={{ gap: 1 }}>
           <Box
+            onClick={() => navigate('/tasks')}
             sx={{
               width: 36,
               height: 36,
@@ -60,44 +125,253 @@ export function Layout({ children }: LayoutProps) {
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              cursor: 'pointer',
             }}
           >
             <LogoIcon sx={{ fontSize: 20, color: '#fff' }} />
           </Box>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 800, letterSpacing: '-0.02em', fontSize: '1.1rem' }}>
+          <Typography
+            onClick={() => navigate('/tasks')}
+            variant="h6"
+            sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontSize: '1.1rem', cursor: 'pointer', mr: 1 }}
+          >
             Insightt
           </Typography>
-          <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
-            <IconButton
-              onClick={toggleMode}
-              size="small"
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
-                color: mode === 'dark' ? '#f1f5f9' : '#475569',
-                '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e2e8f0' },
-              }}
-            >
-              {mode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
+
+          {!isMobileNav && (
+            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center' }}>
+              <Button
+                onClick={() => navigate('/tasks')}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: isActive('/tasks') ? 700 : 600,
+                  color: isActive('/tasks') ? '#4f46e5' : mode === 'dark' ? '#cbd5e1' : '#475569',
+                  bgcolor: isActive('/tasks') ? (mode === 'dark' ? 'rgba(79,70,229,0.15)' : '#eef2ff') : 'transparent',
+                }}
+              >
+                Tareas
+              </Button>
+
+              <NavButton label="Usuarios" icon={<UsersIcon sx={{ fontSize: 18 }} />} active={isActive('/users')} hasMenu onClick={(e) => setUsersAnchor(e.currentTarget)} />
+              <NavButton label="Documentación" icon={<DocsIcon sx={{ fontSize: 18 }} />} active={isActive('/docs')} hasMenu onClick={(e) => setDocsAnchor(e.currentTarget)} />
+            </Box>
+          )}
+
+          {isMobileNav && <Box sx={{ flex: 1 }} />}
+
+          {!isMobileNav && (
+            <>
+              <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
+                <IconButton
+                  onClick={toggleMode}
+                  size="small"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 2,
+                    bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+                    color: mode === 'dark' ? '#f1f5f9' : '#475569',
+                    '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e2e8f0' },
+                  }}
+                >
+                  {mode === 'dark' ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+              <Button
+                onClick={handleLogout}
+                startIcon={<LogoutIcon />}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: mode === 'dark' ? '#94a3b8' : '#64748b',
+                  '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
+                }}
+              >
+                Logout
+              </Button>
+            </>
+          )}
+
+          {isMobileNav && (
+            <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: mode === 'dark' ? '#f1f5f9' : '#0f172a' }}>
+              <MenuIcon />
             </IconButton>
-          </Tooltip>
-          <Button
-            onClick={handleLogout}
-            startIcon={<LogoutIcon />}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              color: mode === 'dark' ? '#94a3b8' : '#64748b',
-              '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
-            }}
-          >
-            Logout
-          </Button>
+          )}
         </Toolbar>
       </AppBar>
+
+      <Menu anchorEl={usersAnchor} open={Boolean(usersAnchor)} onClose={() => setUsersAnchor(null)} slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 220, mt: 1 } } }}>
+        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users'); }}>Listar usuarios</MenuItem>
+        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users?action=create'); }}>Crear usuario</MenuItem>
+        <Divider />
+        <MenuItem disabled sx={{ opacity: 0.6 }}>
+          Editar / Eliminar desde la tabla
+        </MenuItem>
+      </Menu>
+
+      <Menu
+        anchorEl={docsAnchor}
+        open={Boolean(docsAnchor)}
+        onClose={() => setDocsAnchor(null)}
+        slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 280, mt: 1 } } }}
+      >
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs'); }}>
+          <ListItemIcon>
+            <DocsIcon fontSize="small" />
+          </ListItemIcon>
+          Ver toda la documentación
+        </MenuItem>
+        <Divider />
+        <Typography variant="caption" sx={{ px: 2, py: 0.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}>
+          MARKDOWN
+        </Typography>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/architecture-and-flows.md', '_blank'); }}>
+          <ListItemIcon>
+            <ArchIcon fontSize="small" />
+          </ListItemIcon>
+          Arquitectura y Flujos
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/business-rules.md', '_blank'); }}>
+          <ListItemIcon>
+            <RulesIcon fontSize="small" />
+          </ListItemIcon>
+          Reglas de Negocio
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/database-schema.md', '_blank'); }}>
+          <ListItemIcon>
+            <SchemaIcon fontSize="small" />
+          </ListItemIcon>
+          Esquema de BD
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/infrastructure.md', '_blank'); }}>
+          <ListItemIcon>
+            <InfraIcon fontSize="small" />
+          </ListItemIcon>
+          Infraestructura
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/testing-strategy.md', '_blank'); }}>
+          <ListItemIcon>
+            <TestIcon fontSize="small" />
+          </ListItemIcon>
+          Testing
+        </MenuItem>
+        <Divider />
+        <Typography variant="caption" sx={{ px: 2, py: 0.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}>
+          DIAGRAMAS HTML
+        </Typography>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/system.architecture.html', '_blank'); }}>
+          <ListItemIcon>
+            <ArchIcon fontSize="small" />
+          </ListItemIcon>
+          System Architecture
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/auth-flow.sequence.html', '_blank'); }}>
+          <ListItemIcon>
+            <FlowIcon fontSize="small" />
+          </ListItemIcon>
+          Auth Flow
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/request-flow.sequence.html', '_blank'); }}>
+          <ListItemIcon>
+            <FlowIcon fontSize="small" />
+          </ListItemIcon>
+          Request Flow
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/infrastructure.architecture.html', '_blank'); }}>
+          <ListItemIcon>
+            <InfraIcon fontSize="small" />
+          </ListItemIcon>
+          Infrastructure
+        </MenuItem>
+      </Menu>
+
+      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)} slotProps={{ paper: { sx: { width: 300 } } }}>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            Navegación
+          </Typography>
+          <IconButton size="small" onClick={toggleMode}>
+            {mode === 'dark' ? <LightIcon /> : <DarkIcon />}
+          </IconButton>
+        </Box>
+        <Divider />
+        <List>
+          <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/tasks'); }} selected={isActive('/tasks')}>
+            <ListItemIcon>
+              <LogoIcon />
+            </ListItemIcon>
+            <ListItemText primary="Tareas" />
+          </ListItemButton>
+
+          <ListItemButton onClick={() => setDrawerUsersOpen((v) => !v)}>
+            <ListItemIcon>
+              <UsersIcon />
+            </ListItemIcon>
+            <ListItemText primary="Usuarios" />
+            <ExpandIcon sx={{ transform: drawerUsersOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+          </ListItemButton>
+          <Collapse in={drawerUsersOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/users'); }}>
+                <ListItemText primary="Listar usuarios" />
+              </ListItemButton>
+              <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/users?action=create'); }}>
+                <ListItemText primary="Crear usuario" />
+              </ListItemButton>
+              <ListItemButton sx={{ pl: 4 }} disabled>
+                <ListItemText primary="Editar / Eliminar — desde tabla" />
+              </ListItemButton>
+            </List>
+          </Collapse>
+
+          <ListItemButton onClick={() => setDrawerDocsOpen((v) => !v)}>
+            <ListItemIcon>
+              <DocsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Documentación" />
+            <ExpandIcon sx={{ transform: drawerDocsOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+          </ListItemButton>
+          <Collapse in={drawerDocsOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/docs'); }}>
+                <ListItemText primary="Ver toda" />
+              </ListItemButton>
+              {[
+                ['Arquitectura', '/docs/architecture-and-flows.md'],
+                ['Reglas', '/docs/business-rules.md'],
+                ['BD Schema', '/docs/database-schema.md'],
+                ['Infra', '/docs/infrastructure.md'],
+                ['Testing', '/docs/testing-strategy.md'],
+              ].map(([label, href]) => (
+                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => window.open(href, '_blank')}>
+                  <ListItemText primary={label} />
+                </ListItemButton>
+              ))}
+              <Divider sx={{ my: 1 }} />
+              {[
+                ['System Architecture', '/docs/diagrams/system.architecture.html'],
+                ['Auth Flow', '/docs/diagrams/auth-flow.sequence.html'],
+                ['Request Flow', '/docs/diagrams/request-flow.sequence.html'],
+              ].map(([label, href]) => (
+                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => window.open(href, '_blank')}>
+                  <ListItemText primary={label} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
+
+          <Divider sx={{ my: 1 }} />
+          <ListItemButton onClick={handleLogout}>
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary="Logout" />
+          </ListItemButton>
+        </List>
+      </Drawer>
+
       <Container maxWidth="xl" sx={{ flex: 1, py: 4 }}>
         {children}
       </Container>

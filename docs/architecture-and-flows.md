@@ -60,28 +60,75 @@ If an attacker injects malicious JavaScript (XSS), they can execute `localStorag
 - Native Cognito Authorizer (expects `Authorization` header) is not used for cookie flow; JWT verification stays in Express (`auth.ts:verifyToken` via JWKS). Optionally replace with Lambda Authorizer that parses `Cookie` in future.
 - `POST /api/auth/logout` clears both cookies (`clearCookie` with same `Secure/SameSite/Path` opts).
 
-## Kanban Board – Drag & Drop Flow
+### Current Auth Identity Endpoint
+`GET /api/auth/me` (authenticated) returns `{ id, email }` from the verified JWT. The dashboard (`DashboardPage`) uses `useCurrentUser()` to resolve `currentUserId` reliably even when `localStorage id_token` is absent (httpOnly). A localStorage fallback `getLocalUserId()` remains for migration.
 
-The `DashboardPage` renders tasks as a 4-column Kanban board (`KanbanBoard` + `KanbanColumn`) powered by `@dnd-kit/core` and `@dnd-kit/sortable`. Columns correspond to the strict state machine `PENDING → IN_PROGRESS → DONE → ARCHIVED`.
+## Layout & Navigation
 
-### Component Hierarchy
+`Layout.tsx` renders a sticky `AppBar` with:
+- **Left:** Logo (`TaskAlt`) + `Insightt` title (navigates to `/tasks`).
+- **Center (desktop, `md`+):** 3 pill buttons: `Tareas` (→ `/tasks`), `Usuarios` (Menu: Listar / Crear), `Documentación` (Menu: Markdown docs + HTML diagrams). Centered via `flex:1 justifyContent:center`.
+- **Right:** Dark mode toggle (`useColorMode`) + Logout.
+- **Mobile (`down(md)`):** Hamburger `Drawer` (right, 300px) with collapsible `Usuarios` and `Documentación` sections plus theme toggle. `useMediaQuery` controls switching.
 
+Routes (`App.tsx`):
+- `/login` → `LoginPage` (public)
+- `/tasks` → `DashboardPage`
+- `/users` → `UsersPage` (supports `?action=create` auto-open)
+- `/docs` → `DocumentationPage` (Markdown cards + HTML diagram previews)
+Protected via `ProtectedRoute` (checks `csrf_token` or `localStorage id_token`; 401 interceptor redirects).
+
+Theme: `ColorModeProvider` persists `light|dark` in `localStorage`, respects `prefers-color-scheme`, injects `getTheme(mode)` (background `#0f172a/#f1f5f9`, primary `#4f46e5`).
+
+## Kanban Board — Drag & Drop + Mobile Fallback
+
+`DashboardPage` renders tasks as a 4-column board (`KanbanBoard` + `KanbanColumn` + `TaskCard`) with responsive behavior:
+- **Desktop (`md`+):** 4 equal columns via `display:grid; gridTemplateColumns: repeat(4,1fr)` — 100% visible, no horizontal scroll. `DndContext` with `PointerSensor(distance:8)` + `TouchSensor(delay:200)` + `closestCenter` + `DragOverlay` (rotated card). Columns are `Paper` with `hexToRgba(accent, 0.10)` background (see below).
+- **Mobile (`down(md)`):** Stack of `Accordion` (all `defaultExpanded={false}`), no drag. Each `TaskCard` shows move buttons.
+
+### Reversible State Machine
+`PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED` plus direct archive (`PENDING/IN_PROGRESS → ARCHIVED`). Implemented in `types/task.ts` + `backend/state-machine.ts`:
+
+```ts
+PENDING: ['IN_PROGRESS','ARCHIVED']
+IN_PROGRESS: ['PENDING','DONE','ARCHIVED']
+DONE: ['IN_PROGRESS','ARCHIVED']
+ARCHIVED: ['DONE']
 ```
-DashboardPage
- ├─ FilterPanel (TaskFilters → URLSearchParams → useTasks)
- ├─ KanbanBoard (DndContext)
- │   ├─ KanbanColumn status=PENDING  (useDroppable id=status, SortableContext)
- │   │   └─ SortableTaskCard[] (useSortable id=task.id, disabled if !isDraggable)
- │   ├─ KanbanColumn status=IN_PROGRESS
- │   ├─ KanbanColumn status=DONE
- │   └─ KanbanColumn status=ARCHIVED
- └─ TaskForm / ShareModal (dialogs)
+
+The `ARCHIVED → DONE` path enables unarchive. The lock in `TaskRepository.update/updateWithPermission` was fixed to allow status transitions even when `DONE/ARCHIVED` (only `description` and non-title fields remain blocked; `title` + valid transitions allowed). Invalid jumps (e.g., `PENDING→DONE`) are still `422`.
+
+### Component Hierarchy (updated)
+```
+Layout (AppBar centered nav + Drawer)
+ └─ DashboardPage
+     ├─ FilterPanel (desktop Paper / mobile Accordion)
+     ├─ KanbanBoard (DndContext on desktop | Stack Accordion on mobile)
+     │   ├─ KanbanColumn status=PENDING  (useDroppable id=status, SortableContext, accent #f59e0b, bg rgba(245,158,11,0.10))
+     │   │   └─ SortableTaskCard[] (useSortable id=task.id, disabled if !isDraggable)
+     │   │       └─ TaskCard (urgency Warm palette, importance Cool palette, email, yyyy-MM-dd)
+     │   ├─ KanbanColumn status=IN_PROGRESS (#3b82f6)
+     │   ├─ KanbanColumn status=DONE (#10b981)
+     │   └─ KanbanColumn status=ARCHIVED (#64748b)
+     ├─ TaskForm / ShareModal
+     └─ Fab (circular + hover shadow, fixed bottom:28 right:28)
 ```
 
-`KanbanColumn` is a droppable container (`useDroppable({ id: status })`) and a `SortableContext` for its tasks. `SortableTaskCard` wraps `TaskCard` with `useSortable({ id: task.id, disabled: !isDraggable })` where `isDraggable = currentUserId && task.assigneeId === currentUserId`. Drag handle is disabled for shared read-only viewers.
+`KanbanColumn` is a droppable container (`useDroppable({ id: status })`) and `SortableContext`. `SortableTaskCard` wraps `TaskCard` with `useSortable({ id: task.id, disabled: !isDraggable })` where `isDraggable = !currentUserId ? true : ownerId===me || assigneeId===me || !assigneeId` (allows owner to drag unassigned tasks; fallback true when `useCurrentUser` still loading).
 
-### Drag-End Sequence
+Column visuals:
+- Top 4px bar `bg accent` with `borderTopLeft/RightRadius:12` so radius is preserved.
+- Column `bg = hexToRgba(accent, 0.10)` (light) / `0.12` (dark); on `isOver` → `0.16/0.18` + `boxShadow 0 0 0 2px accent40`.
+- Header: `8px` dot + `STATUS_LABELS` + `Chip` count; interior `Stack` bg tinted on hover.
 
+`TaskCard` changes:
+- Urgency (Warm amber→red) vs Importance (Cool sky→violet) with icons `Flag/Star` and labels `Urgency: X` / `Importance: Y`.
+- Dates formatted via `formatDateISO` → `yyyy-MM-dd` (no `T00:00…`).
+- Assignee shows `email` via `assigneeEmailMap` (from `useUsers + useCurrentUser`), fallback to `id`.
+- Mobile footer adds `Prev/Next` arrow buttons (`isMobile`): `Prev` → `STATUS_ORDER[idx-1]` if `VALID_TRANSITIONS[current].includes(prev)`, `Next` → `STATUS_ORDER[idx+1]`; calls `onMove` (Dashboard `handleMove` → `PUT /api/tasks/:id {status}`).
+- Desktop footer keeps `Share/Edit/Archive/MarkDone/Delete`; `PENDING` has no transition button (drag only), `IN_PROGRESS` → `Mark Done` (via `markAsDone`), `DONE` → `Archive` (`updateWithPermission`), `ARCHIVED` none. Edit disabled only for `ARCHIVED` (so `DONE` title typo fix remains allowed).
+
+### Drag-End Sequence (reversible)
 ```mermaid
 flowchart TD
     A[User drags TaskCard] --> B[DndContext closestCenter]
@@ -97,9 +144,9 @@ flowchart TD
     H -- different --> J{VALID_TRANSITIONS[current].includes(newStatus)?}
     J -- no --> K[Ignore invalid PENDING->DONE]
     J -- yes --> L[onMove taskId, newStatus]
-    L --> M[DashboardPage handleMove: permission check]
-    M --> N{caller === assigneeId?}
-    N -- no --> O[Snackbar Error: Only assignee can move]
+    L --> M[DashboardPage handleMove: owner||assignee||unassigned?]
+    M --> N{permission ok?}
+    N -- no --> O[Snackbar: Only owner or assignee can move]
     N -- yes --> P[PUT /api/tasks/:id {status:newStatus} via updateWithPermission]
     P --> Q{validateStateTransition}
     Q -- 422 --> R[Snackbar invalid transition]
@@ -107,10 +154,7 @@ flowchart TD
     Q -- 200 --> T[React Query invalidates tasks, re-renders board]
 ```
 
-Key invariants:
-* Invalid transitions are silently ignored on the client (`allowed.includes` guard) and rejected with `422` on the server.
-* Permission is enforced twice: client disables drag for non-assignees (UX) and `updateWithPermission` returns `403` (`Only assignee can change status`) if violated.
-* `TaskCard` left border is derived from `getDeadlineColor(dueDate)` – overdue tasks keep red border regardless of column.
+Mobile path: `TaskCard Prev/Next → mobileMoveHandler → onMove → handleMove → same PUT chain` (no DndContext).
 
 ## Filter Flow
 
@@ -130,13 +174,59 @@ flowchart LR
     FilterPanel --> Chips[Active filter Chips + Clear]
 ```
 
-* **Title:** `contains + insensitive`.
-* **Tags:** `hasSome` (OR).
-* **Assignee:** `Autocomplete` from `useUsers()` (distinct assignees/owners the caller can access); single select exact `assigneeId`.
-* **Urgency/Importance:** exact `Int` 1–4.
-* **Dates:** `gte/lte` on `startDate`/`dueDate` (`Date` parsing). `overdue: dueDate < now()`.
-* **Status:** `in` array.
-* **URL sync:** `filters` ↔ `URLSearchParams` so refresh preserves view.
+Responsive wrapper: On `down(md)`, `FilterPanel` itself renders as an `Accordion` (`FilterListIcon`, `defaultExpanded:false`) with `activeCount` chip (sum of all active filters) in summary; content is `FilterContent` (same fields). Desktop renders `Paper` with title `Filters`.
+
+## Users Management
+
+`UsersPage` (`/users`) provides full CRUD via `POST/PUT/DELETE /api/users` (authenticated) plus `GET /api/users/all` for admin table:
+
+- **List:** `useAllUsers` → `Table` with avatar, name, email, 8-char id, `Tú` chip for `me`. Dark-mode aware.
+- **Create:** `Crear usuario` (`/users?action=create` auto-opens dialog). Dialog validates email regex, posts `{email,name}` → `201` or `409 Email already exists`.
+- **Edit:** Pencil icon opens dialog prefilled, `PUT /api/users/:id`.
+- **Delete:** Trash icon → confirm dialog. Backend checks `id===callerId → 403`, `owned tasks → 409`, otherwise nulls `assigneeId`, deletes `task_shares`, then `user`.
+
+Quota: `TaskCard` assignee label resolves via `assigneeEmailMap` (see above).
+
+```mermaid
+sequenceDiagram
+    participant Admin as Admin (Browser)
+    participant API as Express API
+    participant DB as PostgreSQL
+
+    Admin->>API: GET /api/users/all
+    API->>DB: SELECT id,email,name FROM users ORDER BY created_at DESC
+    DB-->>Admin: User[]
+    Admin->>Admin: Opens Create dialog
+    Admin->>API: POST /api/users {email,name}
+    API->>DB: INSERT users
+    DB-->>API: created
+    API-->>Admin: 201 {user} -> invalidate users/all + users
+    Admin->>API: PUT /api/users/:id {email,name}
+    API->>DB: UPDATE users SET email,name
+    API-->>Admin: 200
+    Admin->>API: DELETE /api/users/:id
+    API->>DB: SELECT COUNT(*) FROM tasks WHERE owner_id=:id
+    alt owns tasks >0
+        API-->>Admin: 409 reassign first
+    else
+        API->>DB: UPDATE tasks SET assignee_id=NULL WHERE assignee_id=:id; DELETE shares; DELETE users
+        API-->>Admin: 204
+    end
+```
+
+## Documentation Viewer
+
+`DocumentationPage` (`/docs`) renders:
+- **Markdown cards** (6 docs): each with left `4px` accent border, icon, `MD` chip, `Abrir` button → `window.open(href,'_blank')`.
+  - Arquitectura y Flujos, Reglas de Negocio, Esquema BD, Infraestructura, Testing, Code Quality.
+- **HTML diagrams** (6): `System Architecture`, `Auth Flow`, `Request Flow`, `Infrastructure`, plus new `Task Lifecycle`, `Kanban Flow`. Each card shows `HTML` chip, `Abrir` + `Preview` toggle that embeds an `iframe` (720px) below.
+
+Top nav `Documentación` menu mirrors the same entries grouped as `MARKDOWN` / `DIAGRAMAS HTML`.
+
+Diagrams (archify):
+- `system.architecture` — updated views: reversible state machine, FAB, Filters accordion, Users/Docs routes.
+- `task-lifecycle.lifecycle` — `PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED` with emphasis on archive/unarchive.
+- `kanban-flow.workflow` — desktop `DndContext` vs mobile `Accordion + Prev/Next`, column bg tint.
 
 ## Share Flow
 

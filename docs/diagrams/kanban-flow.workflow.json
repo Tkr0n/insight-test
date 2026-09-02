@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kanban Board — Drag & Drop vs Mobile",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "desktop", "label": "Desktop drag", "focus": ["dashboard", "kanban", "column", "drag", "drop"], "note": "DndContext with sensors, 4-column grid, 10% accent bg." },
+      { "id": "mobile", "label": "Mobile fallback", "focus": ["dashboard", "kanban-mobile", "filters-acc", "card-move"], "note": "Accordions closed by default, Prev/Next buttons call PUT." },
+      { "id": "persist", "label": "Persist", "focus": ["permission", "validate", "update"], "note": "Owner||assignee check + reversible validation." }
+    ]
+  },
+  "lanes": [
+    { "id": "ui", "label": "UI Layer" },
+    { "id": "interaction", "label": "Interaction" },
+    { "id": "data", "label": "Data + Permission" }
+  ],
+  "phases": [
+    { "id": "filter", "label": "Filters", "fromCol": 0, "toCol": 1 },
+    { "id": "board", "label": "Board", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "persist", "label": "Persist", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["dashboard", "filters", "kanban", "column", "update", "refresh"],
+  "nodes": [
+    { "id": "dashboard", "lane": "ui", "col": 0, "type": "frontend", "label": "DashboardPage", "sublabel": "useTasks + me", "width": 132 },
+    { "id": "filters", "lane": "ui", "col": 1, "type": "frontend", "label": "FilterPanel", "sublabel": "Paper / Accordion", "width": 132 },
+    { "id": "kanban", "lane": "ui", "col": 2, "type": "frontend", "label": "KanbanBoard", "sublabel": "grid 4 col", "width": 132 },
+    { "id": "column", "lane": "ui", "col": 3, "type": "frontend", "label": "KanbanColumn", "sublabel": "accent 10% bg", "width": 132 },
+    { "id": "filters-acc", "lane": "ui", "col": 4, "type": "frontend", "label": "Filters Accordion", "sublabel": "badge count", "width": 132 },
+    { "id": "kanban-mobile", "lane": "ui", "col": 5, "type": "frontend", "label": "Kanban Accordion", "sublabel": "closed default", "width": 132 },
+    { "id": "card-move", "lane": "interaction", "col": 0, "type": "frontend", "label": "TaskCard move", "sublabel": "Prev/Next mobile", "width": 132 },
+    { "id": "drag", "lane": "interaction", "col": 2, "type": "backend", "label": "Drag start", "sublabel": "useSortable", "width": 132 },
+    { "id": "drop", "lane": "interaction", "col": 3, "type": "backend", "label": "handleDragEnd", "sublabel": "newStatus?", "width": 132 },
+    { "id": "permission", "lane": "data", "col": 2, "type": "backend", "label": "handleMove", "sublabel": "owner||assignee?", "width": 132 },
+    { "id": "validate", "lane": "data", "col": 3, "type": "backend", "label": "validateTransition", "sublabel": "reversible 422", "width": 132 },
+    { "id": "update", "lane": "data", "col": 4, "type": "database", "label": "PUT /tasks/:id", "sublabel": "updateWithPermission", "width": 132 },
+    { "id": "refresh", "lane": "data", "col": 5, "type": "external", "label": "Invalidate", "sublabel": "React Query", "width": 132 }
+  ],
+  "edges": [
+    { "id": "dash-filters", "from": "dashboard", "to": "filters", "label": "URL ↔ TaskFilters" },
+    { "id": "filters-kanban", "from": "filters", "to": "kanban", "variant": "emphasis" },
+    { "id": "kanban-column", "from": "kanban", "to": "column" },
+    { "id": "column-update", "from": "column", "to": "update", "label": "drag/desktop" },
+    { "id": "update-refresh", "from": "update", "to": "refresh", "label": "200" },
+    { "id": "card-perm", "from": "card-move", "to": "permission", "label": "onMove mobile" },
+    { "id": "drag-drop", "from": "drag", "to": "drop", "label": "closestCenter" },
+    { "id": "drop-perm", "from": "drop", "to": "permission", "label": "onMove desktop", "route": "drop" },
+    { "id": "perm-validate", "from": "permission", "to": "validate", "label": "check" },
+    { "id": "validate-update", "from": "validate", "to": "update", "label": "allowed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Desktop", "items": ["4-column grid, no scroll, hexToRgba(accent,0.10) bg", "PointerSensor 8px + TouchSensor 200ms + DragOverlay", "isDraggable = owner||assignee||unassigned"] },
+    { "dot": "amber", "title": "Mobile", "items": ["Kanban + Filters as Accordion (closed)", "No DndContext — Prev/Next call PUT", "FAB circular remains for New Task"] },
+    { "dot": "violet", "title": "State", "items": ["Reversible: PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED", "DONE/ARCHIVED lock: only title + valid transition", "Email via map — date yyyy-MM-dd"] }
+  ]
+}
