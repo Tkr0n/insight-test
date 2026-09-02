@@ -11,6 +11,8 @@
 
 Relations: `ownedTasks` (1:N via `tasks.owner_id`), `assignedTasks` (1:N via `tasks.assignee_id`), `shares` (1:N via `task_shares.user_id`).
 
+> **Authorization note:** there is **no `role` column**. The `admin` role is derived at runtime from `env.ADMIN_EMAIL` (`admin@insightt.com`) and `id` is always the Cognito `sub` (both for login-created rows and for admin-created users, so the JWT identity matches the row). See `docs/business-rules.md` → "User Management & Authentication".
+
 ## Table: `tasks`
 
 | Column | Type | Constraints | Description |

@@ -132,7 +132,7 @@ Column visuals:
 - Dates formatted via `formatDateISO` → `yyyy-MM-dd` (no `T00:00…`).
 - Assignee shows `email` via `assigneeEmailMap` (from `useUsers + useCurrentUser`), fallback to `id`.
 - Mobile footer adds `Prev/Next` arrow buttons (`isMobile`): `Prev` → `STATUS_ORDER[idx-1]` if `VALID_TRANSITIONS[current].includes(prev)`, `Next` → `STATUS_ORDER[idx+1]`; calls `onMove` (Dashboard `handleMove` → `PUT /api/tasks/:id {status}`).
-- Desktop footer keeps `Share/Edit/Archive/MarkDone/Delete`; `PENDING` has no transition button (drag only), `IN_PROGRESS` → `Mark Done` (via `markAsDone`), `DONE` → `Archive` (`updateWithPermission`), `ARCHIVED` none. Edit disabled only for `ARCHIVED` (so `DONE` title typo fix remains allowed).
+- Desktop footer keeps `Share/Edit/Archive/MarkDone/Delete`; `PENDING` has no transition button (drag only), `IN_PROGRESS` → `Mark Done` (via `markAsDone`), `DONE` → `Archive` (`updateWithPermission`), `ARCHIVED` none. Edit disabled only for `ARCHIVED` (so `DONE` title typo fix remains allowed). For a **shared-only** viewer (`canManage = owner || assignee` is false) the footer shows a `Read-only` label instead of those buttons (and the mobile move arrows), matching the permission matrix in `business-rules.md`.
 
 ### Drag-End Sequence (reversible)
 ```mermaid

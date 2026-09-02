@@ -57,6 +57,7 @@ interface DiagramItem {
 
 export const DIAGRAMS: DiagramItem[] = [
   { id: 'system.architecture', title: 'System Architecture', desc: 'Components, boundaries and connections', file: 'system.architecture.html', color: '#4f46e5' },
+  { id: 'users-access', title: 'Access & Roles', desc: 'Admin by email, user lifecycle and task permissions', file: 'users-access.architecture.html', color: '#0891b2' },
   { id: 'auth-flow', title: 'Auth Flow (Sequence)', desc: 'httpOnly + CSRF double-submit', file: 'auth-flow.sequence.html', color: '#0891b2' },
   { id: 'request-flow', title: 'Request Flow (Sequence)', desc: 'markAsDone: SETNX + Lambda FOR UPDATE', file: 'request-flow.sequence.html', color: '#e11d48' },
   { id: 'infrastructure', title: 'Infrastructure', desc: 'Docker, Postgres, PgBouncer, Redis', file: 'infrastructure.architecture.html', color: '#ea580c' },
