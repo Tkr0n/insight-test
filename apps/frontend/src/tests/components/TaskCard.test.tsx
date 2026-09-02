@@ -32,9 +32,11 @@ describe('TaskCard', () => {
     expect(screen.getByText('A test description')).toBeInTheDocument();
   });
 
-  it('shows Start button for PENDING task', () => {
+  it('shows no transition button for PENDING task (drag to move)', () => {
     render(<TaskCard task={createTask({ status: 'PENDING' })} {...defaultProps} />);
-    expect(screen.getByLabelText('Start')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Start')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Mark Done')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Archive')).not.toBeInTheDocument();
   });
 
   it('shows Mark Done button for IN_PROGRESS task', () => {
@@ -59,16 +61,16 @@ describe('TaskCard', () => {
     const onTransition = vi.fn();
     render(
       <TaskCard
-        task={createTask({ status: 'PENDING' })}
+        task={createTask({ status: 'IN_PROGRESS' })}
         {...defaultProps}
         onTransition={onTransition}
       />
     );
-    const wrapper = screen.getByLabelText('Start');
+    const wrapper = screen.getByLabelText('Mark Done');
     await user.click(within(wrapper).getByRole('button'));
     expect(onTransition).toHaveBeenCalledWith(
       '550e8400-e29b-41d4-a716-446655440000',
-      'IN_PROGRESS'
+      'DONE'
     );
   });
 

@@ -8,6 +8,7 @@ import { validate } from '../middlewares/validate.js';
 import { loginSchema } from '../validations/auth.js';
 import { generateCsrfToken, csrfIssue } from '../middlewares/csrf.js';
 import { asyncHandler } from '../middlewares/async-handler.js';
+import { authenticate } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -105,5 +106,10 @@ router.post('/logout', (_req: Request, res: Response) => {
 });
 
 router.get('/csrf', csrfIssue);
+
+router.get('/me', authenticate, (req, res) => {
+  if (!req.user) throw new AppError(401, 'Not authenticated');
+  res.json({ data: { id: req.user.sub, email: req.user.email ?? '' } });
+});
 
 export { router as authRoutes };

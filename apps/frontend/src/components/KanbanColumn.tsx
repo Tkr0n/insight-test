@@ -10,6 +10,7 @@ import { useTheme } from '@mui/material/styles';
 import { TaskCard } from './TaskCard';
 import type { Task, TaskStatus } from '../types/task';
 import { STATUS_LABELS } from '../types/task';
+import { hexToRgba } from '../utils/priority';
 
 const COLUMN_ACCENT: Record<TaskStatus, string> = {
   PENDING: '#f59e0b',
@@ -22,6 +23,7 @@ interface KanbanColumnProps {
   status: TaskStatus;
   tasks: Task[];
   currentUserId?: string;
+  assigneeEmailMap?: Map<string, string>;
   onTransition: (taskId: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
@@ -31,6 +33,7 @@ interface KanbanColumnProps {
 interface SortableTaskCardProps {
   task: Task;
   currentUserId?: string;
+  assigneeEmail?: string | null;
   onTransition: (taskId: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
@@ -40,12 +43,16 @@ interface SortableTaskCardProps {
 function SortableTaskCard({
   task,
   currentUserId,
+  assigneeEmail,
   onTransition,
   onEdit,
   onDelete,
   onShare,
 }: SortableTaskCardProps) {
-  const isDraggable = Boolean(currentUserId && task.assigneeId === currentUserId);
+  const fallbackDraggable = !currentUserId;
+  const isDraggable = fallbackDraggable
+    ? true
+    : task.ownerId === currentUserId || task.assigneeId === currentUserId || !task.assigneeId;
 
   const {
     attributes,
@@ -70,6 +77,7 @@ function SortableTaskCard({
     <Box ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <TaskCard
         task={task}
+        assigneeEmail={assigneeEmail}
         onTransition={onTransition}
         onEdit={onEdit}
         onDelete={onDelete}
@@ -85,6 +93,7 @@ export function KanbanColumn({
   status,
   tasks,
   currentUserId,
+  assigneeEmailMap,
   onTransition,
   onEdit,
   onDelete,
@@ -94,6 +103,8 @@ export function KanbanColumn({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const accent = COLUMN_ACCENT[status];
+
+  const accentBg = hexToRgba(accent, isDark ? 0.12 : 0.10);
 
   return (
     <Paper
@@ -107,7 +118,7 @@ export function KanbanColumn({
         minHeight: 420,
         borderRadius: 3,
         overflow: 'hidden',
-        bgcolor: isDark ? '#1e293b' : '#ffffff',
+        bgcolor: accentBg,
         border: '1px solid',
         borderColor: isOver
           ? accent
@@ -117,19 +128,20 @@ export function KanbanColumn({
         boxShadow: isDark
           ? '0 4px 12px rgba(0,0,0,0.3)'
           : '0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04)',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
         ...(isOver && {
-          boxShadow: `0 0 0 2px ${accent}30, 0 4px 16px rgba(15,23,42,0.08)`,
-          bgcolor: isDark ? 'rgba(30,41,59,0.95)' : '#ffffff',
+          boxShadow: `0 0 0 2px ${accent}40, 0 4px 16px rgba(15,23,42,0.08)`,
+          bgcolor: hexToRgba(accent, isDark ? 0.18 : 0.16),
         }),
       }}
     >
-      {/* Color-coded header bar */}
       <Box
         sx={{
           height: 4,
           bgcolor: accent,
           flexShrink: 0,
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
         }}
       />
       <Box
@@ -200,6 +212,7 @@ export function KanbanColumn({
               key={task.id}
               task={task}
               currentUserId={currentUserId}
+              assigneeEmail={task.assigneeId ? (assigneeEmailMap?.get(task.assigneeId) ?? null) : null}
               onTransition={onTransition}
               onEdit={onEdit}
               onDelete={onDelete}

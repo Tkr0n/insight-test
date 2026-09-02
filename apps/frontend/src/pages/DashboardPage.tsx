@@ -1,15 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Typography,
-  Button,
   Stack,
   Skeleton,
   Snackbar,
   Alert,
   Box,
   Paper,
-  Chip,
+  Typography,
+  Button,
+  Fab,
+  Tooltip,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
@@ -18,6 +19,8 @@ import { useCreateTask } from '../hooks/useCreateTask';
 import { useUpdateTask } from '../hooks/useUpdateTask';
 import { useDeleteTask } from '../hooks/useDeleteTask';
 import { useMarkAsDone } from '../hooks/useMarkAsDone';
+import { useUsers } from '../hooks/useUsers';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { KanbanBoard } from '../components/KanbanBoard';
 import { FilterPanel } from '../components/FilterPanel';
 import { ShareModal } from '../components/ShareModal';
@@ -31,7 +34,7 @@ interface SnackbarState {
   severity: 'success' | 'error';
 }
 
-function getCurrentUserId(): string | undefined {
+function getLocalUserId(): string | undefined {
   try {
     const token = localStorage.getItem('id_token');
     if (!token) return undefined;
@@ -103,8 +106,17 @@ export function DashboardPage() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const markAsDone = useMarkAsDone();
+  const { data: users } = useUsers();
+  const { data: me } = useCurrentUser();
 
-  const currentUserId = useMemo(() => getCurrentUserId(), []);
+  const currentUserId = useMemo(() => me?.id ?? getLocalUserId(), [me]);
+
+  const assigneeEmailMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of users ?? []) map.set(u.id, u.email);
+    if (me) map.set(me.id, me.email);
+    return map;
+  }, [users, me]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -190,9 +202,12 @@ export function DashboardPage() {
   const handleMove = (taskId: string, newStatus: TaskStatus) => {
     const task = tasks?.find((t) => t.id === taskId);
     if (!task) return;
-    if (task.assigneeId !== currentUserId) {
-      setSnackbar({ open: true, message: 'Only assignee can move', severity: 'error' });
-      return;
+    if (currentUserId) {
+      const canMove = task.ownerId === currentUserId || task.assigneeId === currentUserId || !task.assigneeId;
+      if (!canMove) {
+        setSnackbar({ open: true, message: 'Only owner or assignee can move', severity: 'error' });
+        return;
+      }
     }
     setTransitioningId(taskId);
     updateTask.mutate(
@@ -284,74 +299,9 @@ export function DashboardPage() {
       };
 
   const isDark = theme.palette.mode === 'dark';
-  const totalTasks = tasks?.length ?? 0;
-  const doneCount = tasks?.filter((t) => t.status === 'DONE' || t.status === 'ARCHIVED').length ?? 0;
 
   return (
-    <Box>
-      {/* Header bar */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          mb: 2.5,
-          borderRadius: 3,
-          bgcolor: isDark ? '#1e293b' : '#ffffff',
-          border: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'stretch', sm: 'center' },
-          justifyContent: 'space-between',
-          gap: 2,
-        }}
-      >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-            My Tasks
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ mt: 0.75, alignItems: 'center' }}>
-            <Chip
-              label={`${totalTasks} total`}
-              size="small"
-              sx={{
-                height: 22,
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
-                color: isDark ? '#cbd5e1' : '#475569',
-              }}
-            />
-            {totalTasks > 0 && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                {doneCount} completed
-              </Typography>
-            )}
-          </Stack>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => {
-            setEditingTask(null);
-            setFormOpen(true);
-          }}
-          sx={{
-            borderRadius: 2.5,
-            textTransform: 'none',
-            fontWeight: 700,
-            px: 2.5,
-            py: 1,
-            bgcolor: '#4f46e5',
-            '&:hover': { bgcolor: '#4338ca' },
-            boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
-            alignSelf: { xs: 'stretch', sm: 'auto' },
-          }}
-        >
-          New Task
-        </Button>
-      </Paper>
-
+    <Box sx={{ pb: 10 }}>
       <FilterPanel
         filters={filters}
         onChange={setFilters}
@@ -406,6 +356,7 @@ export function DashboardPage() {
         <KanbanBoard
           tasks={tasks}
           currentUserId={currentUserId}
+          assigneeEmailMap={assigneeEmailMap}
           onMove={handleMove}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -413,6 +364,31 @@ export function DashboardPage() {
           onTransition={handleTransition}
         />
       )}
+
+      {/* Floating circular New Task button */}
+      <Tooltip title="New Task">
+        <Fab
+          color="primary"
+          onClick={() => {
+            setEditingTask(null);
+            setFormOpen(true);
+          }}
+          sx={{
+            position: 'fixed',
+            bottom: 28,
+            right: 28,
+            width: 56,
+            height: 56,
+            bgcolor: '#4f46e5',
+            '&:hover': { bgcolor: '#4338ca' },
+            boxShadow: '0 8px 24px rgba(79,70,229,0.4)',
+            zIndex: 1200,
+          }}
+          aria-label="New Task"
+        >
+          <AddIcon />
+        </Fab>
+      </Tooltip>
 
       <TaskForm
         open={formOpen}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -18,6 +18,7 @@ import { KanbanColumn } from './KanbanColumn';
 import { TaskCard } from './TaskCard';
 import type { Task, TaskStatus } from '../types/task';
 import { VALID_TRANSITIONS, STATUS_LABELS } from '../types/task';
+import { hexToRgba } from '../utils/priority';
 
 const STATUSES: TaskStatus[] = ['PENDING', 'IN_PROGRESS', 'DONE', 'ARCHIVED'];
 const STATUS_SET = new Set<string>(STATUSES);
@@ -46,6 +47,7 @@ function groupByStatus(tasks: Task[]): Record<TaskStatus, Task[]> {
 interface KanbanBoardProps {
   tasks: Task[];
   currentUserId?: string;
+  assigneeEmailMap?: Map<string, string>;
   onMove: (taskId: string, newStatus: TaskStatus) => void;
   onTransition: (taskId: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
@@ -56,6 +58,7 @@ interface KanbanBoardProps {
 export function KanbanBoard({
   tasks,
   currentUserId,
+  assigneeEmailMap,
   onMove,
   onTransition,
   onEdit,
@@ -67,6 +70,11 @@ export function KanbanBoard({
   const isDark = theme.palette.mode === 'dark';
   const byStatus = groupByStatus(tasks);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  const activeEmail = useMemo(() => {
+    if (!activeTask?.assigneeId) return null;
+    return assigneeEmailMap?.get(activeTask.assigneeId) ?? null;
+  }, [activeTask, assigneeEmailMap]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -121,7 +129,6 @@ export function KanbanBoard({
 
   const handleDragCancel = () => setActiveTask(null);
 
-  // Mobile: accordion layout, all collapsed by default, no drag
   if (isMobile) {
     return (
       <Stack spacing={1.25}>
@@ -138,7 +145,7 @@ export function KanbanBoard({
                 borderRadius: '12px !important',
                 border: '1px solid',
                 borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)',
-                bgcolor: isDark ? '#1e293b' : '#ffffff',
+                bgcolor: hexToRgba(accent, isDark ? 0.1 : 0.08),
                 overflow: 'hidden',
                 '&:before': { display: 'none' },
               }}
@@ -149,6 +156,8 @@ export function KanbanBoard({
                   minHeight: 56,
                   borderLeft: `4px solid ${accent}`,
                   bgcolor: isDark ? 'rgba(15,23,42,0.3)' : '#f8fafc',
+                  borderTopLeftRadius: 12,
+                  borderTopRightRadius: 12,
                   '& .MuiAccordionSummary-content': { alignItems: 'center', gap: 1.5 },
                 }}
               >
@@ -188,6 +197,7 @@ export function KanbanBoard({
                     <TaskCard
                       key={task.id}
                       task={task}
+                      assigneeEmail={task.assigneeId ? (assigneeEmailMap?.get(task.assigneeId) ?? null) : null}
                       onTransition={onTransition}
                       onEdit={onEdit}
                       onDelete={onDelete}
@@ -205,7 +215,6 @@ export function KanbanBoard({
     );
   }
 
-  // Desktop: 4 equal columns, 100% visible, drag enabled
   return (
     <DndContext
       sensors={sensors}
@@ -229,6 +238,7 @@ export function KanbanBoard({
             status={status}
             tasks={byStatus[status] ?? []}
             currentUserId={currentUserId}
+            assigneeEmailMap={assigneeEmailMap}
             onTransition={onTransition}
             onEdit={onEdit}
             onDelete={onDelete}
@@ -242,6 +252,7 @@ export function KanbanBoard({
           <Box sx={{ width: 340, transform: 'rotate(2deg)', boxShadow: '0 12px 32px rgba(15,23,42,0.2)' }}>
             <TaskCard
               task={activeTask}
+              assigneeEmail={activeEmail}
               onTransition={() => {}}
               onEdit={() => {}}
               onDelete={() => {}}

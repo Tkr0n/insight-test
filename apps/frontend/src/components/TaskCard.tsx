@@ -11,26 +11,28 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  PlayArrow as StartIcon,
   CheckCircle as DoneIcon,
   Archive as ArchiveIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Person as PersonIcon,
-  CalendarToday as CalendarIcon,
   Share as ShareIcon,
   DragIndicator as DragIcon,
   Label as TagIcon,
+  Flag as UrgencyIcon,
+  Star as ImportanceIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { StatusChip } from './StatusChip';
 import type { Task, TaskStatus } from '../types/task';
 import { VALID_TRANSITIONS } from '../types/task';
 import { getDeadlineColor } from '../utils/deadline';
-import { getPriorityLabel, getPriorityMeta } from '../utils/priority';
+import { getPriorityLabel, getUrgencyMeta, getImportanceMeta } from '../utils/priority';
+import { formatDateISO } from '../utils/formatDate';
 
 interface TaskCardProps {
   task: Task;
+  assigneeEmail?: string | null;
   onTransition: (taskId: string, status: TaskStatus) => void;
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
@@ -44,7 +46,7 @@ interface TaskCardProps {
 function getTransitionAction(status: TaskStatus): { label: string; icon: React.ReactNode } | null {
   switch (status) {
     case 'PENDING':
-      return { label: 'Start', icon: <StartIcon fontSize="small" /> };
+      return null;
     case 'IN_PROGRESS':
       return { label: 'Mark Done', icon: <DoneIcon fontSize="small" /> };
     case 'DONE':
@@ -62,6 +64,7 @@ const DEADLINE_ACCENT: Record<string, string> = {
 
 export function TaskCard({
   task,
+  assigneeEmail,
   onTransition,
   onDelete,
   onEdit,
@@ -80,9 +83,12 @@ export function TaskCard({
   const visibleTags = tags.slice(0, 3);
   const remainingCount = tags.length - 3;
 
-  const urgencyMeta = getPriorityMeta(task.urgency ?? 2, isDark);
-  const importanceMeta = getPriorityMeta(task.importance ?? 2, isDark);
+  const urgencyMeta = getUrgencyMeta(task.urgency ?? 2, isDark);
+  const importanceMeta = getImportanceMeta(task.importance ?? 2, isDark);
   const accent = deadlineColor ? DEADLINE_ACCENT[deadlineColor] : 'transparent';
+
+  const startLabel = formatDateISO(task.startDate);
+  const dueLabel = formatDateISO(task.dueDate);
 
   return (
     <Card
@@ -109,7 +115,6 @@ export function TaskCard({
       }}
     >
       <CardContent sx={{ p: 2, pb: '12px !important' }}>
-        {/* Header: title + status + drag handle */}
         <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
           {isDraggable && (
             <Box sx={{ pt: 0.3, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(15,23,42,0.2)', display: 'flex' }}>
@@ -153,10 +158,11 @@ export function TaskCard({
           <StatusChip status={task.status} />
         </Stack>
 
-        {/* Priority labels — replaces U:1 / I:2 */}
-        <Stack direction="row" spacing={0.75} sx={{ mt: 1.5, flexWrap: 'wrap' }}>
+        {/* Urgency vs Importance — differentiated labels + distinct palettes */}
+        <Stack direction="row" spacing={0.75} sx={{ mt: 1.5, flexWrap: 'wrap', gap: 0.75 }}>
           <Chip
-            label={getPriorityLabel(task.urgency ?? 2)}
+            icon={<UrgencyIcon sx={{ fontSize: 12 }} />}
+            label={`Urgency: ${getPriorityLabel(task.urgency ?? 2)}`}
             size="small"
             sx={{
               height: 22,
@@ -166,10 +172,12 @@ export function TaskCard({
               bgcolor: urgencyMeta.bg,
               color: urgencyMeta.color,
               border: `1px solid ${urgencyMeta.border}`,
+              '& .MuiChip-icon': { color: urgencyMeta.color, ml: '6px', fontSize: 12 },
             }}
           />
           <Chip
-            label={getPriorityLabel(task.importance ?? 2)}
+            icon={<ImportanceIcon sx={{ fontSize: 12 }} />}
+            label={`Importance: ${getPriorityLabel(task.importance ?? 2)}`}
             size="small"
             sx={{
               height: 22,
@@ -179,11 +187,11 @@ export function TaskCard({
               bgcolor: importanceMeta.bg,
               color: importanceMeta.color,
               border: `1px solid ${importanceMeta.border}`,
+              '& .MuiChip-icon': { color: importanceMeta.color, ml: '6px', fontSize: 12 },
             }}
           />
         </Stack>
 
-        {/* Tags */}
         {tags.length > 0 && (
           <Stack direction="row" spacing={0.5} sx={{ mt: 1.25, flexWrap: 'wrap', gap: 0.5 }}>
             {visibleTags.map((tag) => (
@@ -218,8 +226,7 @@ export function TaskCard({
           </Stack>
         )}
 
-        {/* Meta row: assignee • dates */}
-        {(task.assigneeId ?? null) !== null || task.dueDate || task.startDate ? (
+        {(task.assigneeId ?? null) !== null || startLabel || dueLabel ? (
           <>
             <Divider sx={{ mt: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)' }} />
             <Stack
@@ -246,52 +253,41 @@ export function TaskCard({
                     variant="caption"
                     sx={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 500 }}
                     noWrap
+                    title={assigneeEmail ?? task.assigneeId}
                   >
-                    {task.assigneeId.slice(0, 8)}
+                    {assigneeEmail ?? task.assigneeId}
                   </Typography>
                 </Stack>
               )}
-              {task.startDate && (
-                <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
-                  <CalendarIcon sx={{ fontSize: 13, color: isDark ? '#64748b' : '#94a3b8' }} />
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
-                    {task.startDate}
-                  </Typography>
-                </Stack>
+              {startLabel && (
+                <Typography variant="caption" sx={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                  {startLabel}
+                </Typography>
               )}
-              {task.dueDate && (
-                <Stack direction="row" spacing={0.4} sx={{ alignItems: 'center' }}>
-                  <CalendarIcon
-                    sx={{
-                      fontSize: 13,
-                      color: deadlineColor === 'red' ? '#ef4444' : deadlineColor === 'orange' ? '#f97316' : isDark ? '#64748b' : '#94a3b8',
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontSize: '0.7rem',
-                      fontWeight: deadlineColor ? 600 : 400,
-                      color:
-                        deadlineColor === 'red'
-                          ? '#ef4444'
-                          : deadlineColor === 'orange'
-                            ? '#f97316'
-                            : isDark
-                              ? '#94a3b8'
-                              : '#64748b',
-                    }}
-                  >
-                    Due {task.dueDate}
-                  </Typography>
-                </Stack>
+              {dueLabel && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: deadlineColor ? 600 : 400,
+                    color:
+                      deadlineColor === 'red'
+                        ? '#ef4444'
+                        : deadlineColor === 'orange'
+                          ? '#f97316'
+                          : isDark
+                            ? '#94a3b8'
+                            : '#64748b',
+                  }}
+                >
+                  Due {dueLabel}
+                </Typography>
               )}
             </Stack>
           </>
         ) : null}
       </CardContent>
 
-      {/* Actions bar */}
       <Box
         sx={{
           display: 'flex',
