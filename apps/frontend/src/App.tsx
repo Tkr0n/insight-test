@@ -26,7 +26,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // With httpOnly cookie, frontend cannot read token directly.
   // Keep lightweight check via localStorage fallback or csrf cookie presence.
   // Actual auth is validated by backend (401 -> axios interceptor redirects).
-  const hasSession = document.cookie.includes('__Host-csrf') || !!localStorage.getItem('id_token');
+  const hasSession = document.cookie.includes('csrf_token') || !!localStorage.getItem('id_token');
   if (!hasSession) {
     return <Navigate to="/login" replace />;
   }

@@ -7,7 +7,7 @@ export const apiClient = axios.create({
 });
 
 function getCsrfToken(): string | null {
-  const match = document.cookie.match(/(?:^|; )__Host-csrf=([^;]*)/);
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
   if (!match) return null;
   const raw = match[1] ?? '';
   return decodeURIComponent(raw);

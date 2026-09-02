@@ -14,7 +14,7 @@ function getCookieOptions() {
   return {
     httpOnly: true,
     secure: isSecure,
-    sameSite: 'strict' as const,
+    sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 1000,
   };
@@ -25,7 +25,7 @@ function getCsrfCookieOptions() {
   return {
     httpOnly: false,
     secure: isSecure,
-    sameSite: 'strict' as const,
+    sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 1000,
   };
@@ -59,8 +59,8 @@ router.post('/login', validate(loginSchema, 'body'), asyncHandler(async (req: Re
 
     const csrfToken = generateCsrfToken();
 
-    res.cookie('__Host-id_token', idToken, getCookieOptions());
-    res.cookie('__Host-csrf', csrfToken, getCsrfCookieOptions());
+    res.cookie('id_token', idToken, getCookieOptions());
+    res.cookie('csrf_token', csrfToken, getCsrfCookieOptions());
 
     res.json({ data: { csrfToken } });
   } catch (err: unknown) {
@@ -79,9 +79,9 @@ router.post('/login', validate(loginSchema, 'body'), asyncHandler(async (req: Re
 
 router.post('/logout', (_req: Request, res: Response) => {
   const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
-  const opts = { path: '/', secure: isSecure, sameSite: 'strict' as const };
-  res.clearCookie('__Host-id_token', { ...opts, httpOnly: true });
-  res.clearCookie('__Host-csrf', { ...opts, httpOnly: false });
+  const opts = { path: '/', secure: isSecure, sameSite: 'lax' as const };
+  res.clearCookie('id_token', { ...opts, httpOnly: true });
+  res.clearCookie('csrf_token', { ...opts, httpOnly: false });
   res.status(204).send();
 });
 

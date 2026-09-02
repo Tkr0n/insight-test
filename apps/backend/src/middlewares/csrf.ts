@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { env } from '../config/env.js';
 import { AppError } from './error-handler.js';
 
-const CSRF_COOKIE_NAME = '__Host-csrf';
+const CSRF_COOKIE_NAME = 'csrf_token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
 const CSRF_TOKEN_BYTES = 32;
 
@@ -38,7 +38,7 @@ function getCookieOptions() {
   return {
     httpOnly: false,
     secure: isSecure,
-    sameSite: 'strict' as const,
+    sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 24 * 1000,
   };
