@@ -28,31 +28,35 @@ def lambda_handler(event, context):
         cur = conn.cursor()
         cur.execute(
             """
-            WITH locked_task AS (
-                SELECT id
-                FROM tasks
-                WHERE id = %s AND owner_id = %s
-                FOR UPDATE
-            )
-            UPDATE tasks
-            SET status = 'DONE', updated_at = %s
-            FROM locked_task
-            WHERE tasks.id = locked_task.id
-            RETURNING tasks.id, tasks.title, tasks.status, tasks.updated_at
+            SELECT id
+            FROM tasks
+            WHERE id = %s AND owner_id = %s
+            FOR UPDATE
             """,
-            (task_id, user_id, datetime.utcnow().isoformat()),
+            (task_id, user_id),
         )
         row = cur.fetchone()
+        if not row:
+            conn.rollback()
+            return response(404, {"error": "Task not found or access denied"})
+
+        cur.execute(
+            """
+            UPDATE tasks
+            SET status = 'DONE', updated_at = %s, version = version + 1
+            WHERE id = %s
+            RETURNING id, title, status, updated_at
+            """,
+            (datetime.utcnow().isoformat(), task_id),
+        )
+        updated = cur.fetchone()
         conn.commit()
 
-        if not row:
-            return response(404, {"error": "Task not found"})
-
         return response(200, {
-            "id": row[0],
-            "title": row[1],
-            "status": row[2],
-            "updated_at": row[3],
+            "id": updated[0],
+            "title": updated[1],
+            "status": updated[2],
+            "updated_at": updated[3],
         })
     except Exception as e:
         conn.rollback()
