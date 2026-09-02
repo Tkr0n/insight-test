@@ -73,7 +73,10 @@ resource "aws_cognito_user_pool_client" "spa" {
 }
 
 resource "null_resource" "test_users" {
-  for_each = toset(["test@insightt.com", "admin@insightt.com"])
+  for_each = {
+    "test@insightt.com"  = "Test User"
+    "admin@insightt.com" = "Admin"
+  }
 
   triggers = {
     user_pool_id = aws_cognito_user_pool.main.id
@@ -90,7 +93,7 @@ resource "null_resource" "test_users" {
         --client-id "${aws_cognito_user_pool_client.spa.id}" \
         --username "${each.key}" \
         --password "TestPass123" \
-        --user-attributes "Name=email,Value=${each.key}" "Name=name,Value=Test User" \
+        --user-attributes "Name=email,Value=${each.key}" "Name=name,Value=${each.value}" \
         --region "${var.aws_region}" || true
 
       # Auto-confirm (ignore error if already confirmed)

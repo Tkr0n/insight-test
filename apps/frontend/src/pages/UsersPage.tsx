@@ -111,7 +111,17 @@ export function UsersPage() {
 
   const isAdmin = me?.isAdmin === true;
 
-  if (me && !isAdmin) {
+  if (!me) {
+    return (
+      <Box sx={{ p: 4 }}>
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} variant="rounded" height={64} sx={{ borderRadius: 2, mb: 1.5 }} />
+        ))}
+      </Box>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">Access restricted to administrators.</Alert>
