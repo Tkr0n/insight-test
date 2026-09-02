@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      redeploy_only:
+        description: 'Skip build/test and just force-redeploy the current :latest images to ECS'
+        required: false
+        default: false
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -11,6 +17,7 @@ env:
 jobs:
   sonarqube-scan:
     name: Build and analyze
+    if: ${{ inputs.redeploy_only != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -22,6 +29,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   test-backend:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [sonarqube-scan]
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +47,7 @@ jobs:
         working-directory: apps/backend
 
   test-frontend:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [sonarqube-scan]
     runs-on: ubuntu-latest
     steps:
@@ -56,6 +65,7 @@ jobs:
         working-directory: apps/frontend
 
   build-backend-arm:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [test-backend]
     runs-on: ubuntu-24.04-arm
     permissions:
@@ -80,6 +90,7 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:latest-arm64
 
   build-backend-amd64:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [test-backend]
     runs-on: ubuntu-latest
     permissions:
@@ -104,6 +115,7 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:latest-amd64
 
   merge-backend:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [build-backend-arm, build-backend-amd64]
     runs-on: ubuntu-latest
     permissions:
@@ -125,6 +137,7 @@ jobs:
           docker manifest push ${{ env.IMAGE_NAME }}:latest
 
   build-frontend-arm:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [test-frontend]
     runs-on: ubuntu-24.04-arm
     permissions:
@@ -161,6 +174,7 @@ jobs:
             VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
 
   build-frontend-amd64:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [test-frontend]
     runs-on: ubuntu-latest
     permissions:
@@ -197,6 +211,7 @@ jobs:
             VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
 
   merge-frontend:
+    if: ${{ inputs.redeploy_only != 'true' }}
     needs: [build-frontend-arm, build-frontend-amd64]
     runs-on: ubuntu-latest
     permissions:
@@ -218,6 +233,7 @@ jobs:
           docker manifest push ${{ env.IMAGE_NAME }}:latest
 
   deploy-infrastructure:
+    if: ${{ !failure() }}
     needs: [merge-backend, merge-frontend]
     runs-on: ubuntu-latest
     permissions:
