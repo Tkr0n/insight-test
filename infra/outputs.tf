@@ -62,3 +62,24 @@ output "ecs_cluster_name" {
   description = "ECS cluster name"
   value       = module.ecs.cluster_name
 }
+
+output "acm_certificate_arn" {
+  description = "ACM certificate ARN"
+  value       = aws_acm_certificate.main.arn
+}
+
+output "acm_validation_domain" {
+  description = "Domain to validate ACM certificate"
+  value       = aws_acm_certificate.main.domain_name
+}
+
+output "acm_validation_records" {
+  description = "DNS records to create in Cloudflare for ACM validation"
+  value = {
+    for dvo in aws_acm_certificate.main.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+}

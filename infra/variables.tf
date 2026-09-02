@@ -39,3 +39,9 @@ variable "cors_origin" {
   type        = string
   default     = ""
 }
+
+variable "domain_name" {
+  description = "Domain name for ACM certificate and CORS"
+  type        = string
+  default     = "insight.verkku.com"
+}

@@ -80,6 +80,15 @@ data "aws_subnets" "default" {
   }
 }
 
+resource "aws_acm_certificate" "main" {
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+
+  tags = {
+    Project = var.project_name
+  }
+}
+
 module "ecs" {
   source = "./modules/ecs"
 
@@ -93,6 +102,8 @@ module "ecs" {
   backend_image = "ghcr.io/tkr0n/insight-test/insightt-backend:latest"
   backend_port  = 3000
   
+  certificate_arn = aws_acm_certificate.main.arn
+
   backend_env = {
     DATABASE_URL           = "postgresql://${var.db_user}:${var.db_password}@${module.rds.hostname}:${module.rds.port}/${var.db_name}"
     REDIS_URL              = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
@@ -101,8 +112,8 @@ module "ecs" {
     COGNITO_CLIENT_ID      = module.cognito.client_id
     NODE_ENV               = "production"
     PORT                   = "3000"
-    CORS_ORIGIN            = var.cors_origin != "" ? var.cors_origin : "https://${var.project_name}.example.com"
+    CORS_ORIGIN            = "https://${var.domain_name}"
     CSRF_SECRET            = var.csrf_secret
-    COOKIE_SECURE          = "false"
+    COOKIE_SECURE          = "true"
   }
 }
