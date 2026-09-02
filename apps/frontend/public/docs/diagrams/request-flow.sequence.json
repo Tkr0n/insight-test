@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "markAsDone Request Flow (Lambda + Idempotency)",
+    "viewBox": [860, 850],
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "idempotency", "label": "Idempotency gate", "focus": ["browser", "react", "express", "redis"], "note": "Redis SETNX prevents duplicate processing of the same request." },
+      { "id": "lambda-exec", "label": "Lambda execution", "focus": ["express", "lambda", "postgres"], "note": "Lambda acquires a pessimistic lock and updates the task status." },
+      { "id": "race-condition", "label": "Race condition protection", "focus": ["redis", "lambda", "postgres"], "note": "Two layers: Redis idempotency key + SQL FOR UPDATE lock." }
+    ]
+  },
+  "participants": [
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "user agent" },
+    { "id": "react", "type": "frontend", "label": "React App", "sublabel": "TaskCard.tsx" },
+    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "taskController" },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "idempotency" },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone" },
+    { "id": "pgbouncer", "type": "cloud", "label": "PgBouncer", "sublabel": "pool :6432" },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "tasks table" }
+  ],
+  "segments": [
+    { "from": 120, "to": 285, "label": "Request + idempotency check" },
+    { "from": 305, "to": 480, "label": "Lambda processing" },
+    { "from": 500, "to": 750, "label": "Response + duplicate guard" }
+  ],
+  "messages": [
+    { "id": "mark-done", "from": "browser", "to": "react", "y": 160, "label": "click 'Mark as Done'", "variant": "emphasis" },
+    { "id": "patch-request", "from": "react", "to": "express", "y": 190, "label": "PATCH /tasks/{id}/done  Idempotency-Key: uuid", "variant": "emphasis" },
+    { "id": "redis-setnx", "from": "express", "to": "redis", "y": 225, "label": "SETNX idem:{key} EX 300", "variant": "security" },
+    { "id": "redis-ok", "from": "redis", "to": "express", "y": 265, "label": "OK", "variant": "return" },
+    { "id": "invoke-lambda", "from": "express", "to": "lambda", "y": 320, "label": "AWS SDK invokeAsync", "variant": "emphasis" },
+    { "id": "lambda-connect", "from": "lambda", "to": "pgbouncer", "y": 355, "label": "connect to pool", "variant": "default" },
+    { "id": "lambda-lock", "from": "postgres", "to": "lambda", "y": 395, "label": "SELECT * FROM tasks WHERE id=$1 FOR UPDATE", "variant": "emphasis" },
+    { "id": "lambda-update", "from": "lambda", "to": "postgres", "y": 435, "label": "UPDATE tasks SET status='DONE'", "variant": "emphasis" },
+    { "id": "lambda-commit", "from": "postgres", "to": "lambda", "y": 475, "label": "COMMIT OK", "variant": "return" },
+    { "id": "lambda-response", "from": "lambda", "to": "express", "y": 530, "label": "200 { status: 'DONE' }", "variant": "return" },
+    { "id": "api-response", "from": "express", "to": "react", "y": 570, "label": "200 { status: 'DONE' }", "variant": "return" },
+    { "id": "ui-update", "from": "react", "to": "browser", "y": 610, "label": "DONE badge", "variant": "return" },
+    { "id": "duplicate-request", "from": "browser", "to": "react", "y": 670, "label": "double-click (duplicate)", "variant": "dashed" },
+    { "id": "duplicate-patch", "from": "react", "to": "express", "y": 710, "label": "PATCH same key", "variant": "dashed" },
+    { "id": "duplicate-reject", "from": "express", "to": "react", "y": 755, "label": "409 Conflict", "variant": "security" }
+  ],
+  "activations": [
+    { "participant": "react", "from": 155, "to": 615, "type": "frontend" },
+    { "participant": "express", "from": 185, "to": 575, "type": "backend" },
+    { "participant": "redis", "from": 220, "to": 270, "type": "database" },
+    { "participant": "lambda", "from": 315, "to": 535, "type": "backend" },
+    { "participant": "pgbouncer", "from": 350, "to": 360, "type": "cloud" },
+    { "participant": "postgres", "from": 390, "to": 480, "type": "database" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Idempotency", "items": ["Redis SETNX with 5-min TTL prevents duplicate processing", "Same Idempotency-Key returns 409 Conflict", "Protects against network retries and double-clicks"] },
+    { "dot": "violet", "title": "Pessimistic Locking", "items": ["SELECT FOR UPDATE locks the task row", "Concurrent Lambda invocations queue or fail", "Ensures ACID atomicity for status transition"] },
+    { "dot": "emerald", "title": "Externalized Processing", "items": ["Lambda handles the critical markAsDone flow", "Express returns immediately, Lambda processes async", "PgBouncer prevents connection pool exhaustion"] }
+  ]
+}

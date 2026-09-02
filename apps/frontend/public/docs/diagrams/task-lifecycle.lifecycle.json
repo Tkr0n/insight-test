@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Task Lifecycle — Reversible State Machine",
+    "viewBox": [980, 620],
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "forward", "label": "Forward progression", "focus": ["pending", "in_progress", "done", "archived"], "note": "Happy path PENDING → IN_PROGRESS → DONE → ARCHIVED." },
+      { "id": "reverse", "label": "Correction (backward)", "focus": ["pending", "in_progress", "done", "archived"], "note": "One-step back allows fixes; ARCHIVED ↔ DONE reversible." }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Main phases" },
+    { "id": "terminal", "label": "Terminal" }
+  ],
+  "states": [
+    { "id": "pending", "type": "start", "label": "Pending", "sublabel": "created", "lane": "main", "col": 0, "step": "01" },
+    { "id": "in_progress", "type": "active", "label": "In Progress", "sublabel": "assignee drives", "lane": "main", "col": 1, "step": "02" },
+    { "id": "done", "type": "active", "label": "Done", "sublabel": "review gate", "lane": "main", "col": 2, "step": "03" },
+    { "id": "archived", "type": "success", "label": "Archived", "sublabel": "locked", "lane": "main", "col": 3, "step": "04" }
+  ],
+  "transitions": [
+    { "id": "p-to-ip", "from": "pending", "to": "in_progress", "variant": "emphasis" },
+    { "id": "ip-to-p", "from": "in_progress", "to": "pending", "variant": "default" },
+    { "id": "ip-to-done", "from": "in_progress", "to": "done", "variant": "emphasis" },
+    { "id": "done-to-ip", "from": "done", "to": "in_progress", "variant": "default" },
+    { "id": "done-to-archived", "from": "done", "to": "archived", "variant": "emphasis" },
+    { "id": "archived-to-done", "from": "archived", "to": "done", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Forward path", "items": ["PENDING → IN_PROGRESS → DONE → ARCHIVED is the happy path", "All forward moves are emphasis transitions", "Archive is reachable from DONE"] },
+    { "dot": "amber", "title": "Reversible correction", "items": ["IN_PROGRESS ↔ PENDING and DONE ↔ IN_PROGRESS allow fixes", "ARCHIVED ↔ DONE enables unarchive", "Invalid jumps (e.g., PENDING→DONE) still 422"] },
+    { "dot": "violet", "title": "Lock semantics", "items": ["DONE/ARCHIVED locks description + most fields", "Title + valid status still allowed", "Only assignee can change status; owner can reassign"] }
+  ]
+}

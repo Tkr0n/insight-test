@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AWS Infrastructure (Terraform)",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "edge", "label": "Edge & CDN", "focus": ["cloudfront", "s3", "frontend-app"], "note": "CloudFront distributes the SPA from S3 and proxies API traffic." },
+      { "id": "compute", "label": "Compute & Auth", "focus": ["apigateway", "lambda", "cognito"], "note": "API Gateway authenticates via Cognito and invokes Lambda." },
+      { "id": "data", "label": "Data Layer", "focus": ["rds", "elasticache"], "note": "PostgreSQL with RDS and Redis with ElastiCache for caching/idempotency." }
+    ]
+  },
+  "components": [
+    { "id": "cloudfront", "type": "cloud", "label": "CloudFront", "sublabel": "CDN + TLS", "pos": [60, 80], "size": [140, 60] },
+    { "id": "s3", "type": "cloud", "label": "S3", "sublabel": "Static SPA", "pos": [60, 240], "size": [140, 60] },
+    { "id": "frontend-app", "type": "frontend", "label": "React App", "sublabel": "Vite + MUI", "pos": [60, 400], "size": [140, 60] },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "REST API", "pos": [310, 80], "size": [150, 60] },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [560, 80], "size": [150, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [310, 280], "size": [150, 60] },
+    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL 16", "pos": [560, 280], "size": [140, 60] },
+    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis 7", "pos": [560, 440], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS Region", "wraps": ["cloudfront", "s3", "apigateway", "cognito", "lambda", "rds", "elasticache"] },
+    { "kind": "security-group", "label": "VPC Private Subnet", "wraps": ["rds", "elasticache"] }
+  ],
+  "connections": [
+    { "id": "cf-s3", "from": "cloudfront", "to": "s3", "label": "OAI fetch", "variant": "dashed", "labelDy": 20 },
+    { "id": "cf-apigw", "from": "cloudfront", "to": "apigateway", "label": "/api/*", "variant": "emphasis" },
+    { "id": "apigw-cognito", "from": "apigateway", "to": "cognito", "label": "JWT verify", "variant": "security" },
+    { "id": "apigw-lambda", "from": "apigateway", "to": "lambda", "label": "invoke", "variant": "emphasis", "labelAt": [385, 155] },
+    { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "SQL via PgBouncer", "labelAt": [530, 250] },
+    { "id": "lambda-redis", "from": "lambda", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "labelAt": [530, 420] },
+    { "id": "s3-react", "from": "s3", "to": "frontend-app", "label": "serves", "variant": "dashed", "labelDy": 20 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Edge", "items": ["CloudFront fronts all traffic", "S3 hosts the React SPA via OAI"] },
+    { "dot": "emerald", "title": "Compute", "items": ["API Gateway routes REST requests", "Lambda handles markAsDone asynchronously"] },
+    { "dot": "rose", "title": "Security", "items": ["Cognito User Pool manages auth", "JWT verification at API Gateway level"] },
+    { "dot": "violet", "title": "Data", "items": ["RDS PostgreSQL 16 for durable state", "ElastiCache Redis 7 for idempotency"] }
+  ]
+}

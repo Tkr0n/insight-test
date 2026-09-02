@@ -65,7 +65,7 @@ export function UsersPage() {
   const handleSubmit = () => {
     setFormError('');
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      setFormError('Email inválido');
+      setFormError('Invalid email');
       return;
     }
     const payload = { email: form.email.trim(), name: form.name.trim() || null };
@@ -75,7 +75,7 @@ export function UsersPage() {
         {
           onSuccess: () => setOpen(false),
           onError: (e: unknown) => {
-            const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Error al actualizar';
+            const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update';
             setFormError(msg);
           },
         }
@@ -84,7 +84,7 @@ export function UsersPage() {
       createUser.mutate(payload, {
         onSuccess: () => setOpen(false),
         onError: (e: unknown) => {
-          const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Error al crear';
+          const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create';
           setFormError(msg);
         },
       });
@@ -102,10 +102,10 @@ export function UsersPage() {
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-            Usuarios
+            Users
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Gestiona los usuarios del sistema — crear, editar y eliminar
+            Manage system users — create, edit and delete
           </Typography>
         </Box>
         <Button
@@ -114,13 +114,13 @@ export function UsersPage() {
           onClick={handleOpenCreate}
           sx={{ borderRadius: 2.5, bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' }, fontWeight: 700 }}
         >
-          Nuevo
+          New
         </Button>
       </Stack>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Error al cargar usuarios
+          Failed to load users
         </Alert>
       )}
 
@@ -144,10 +144,10 @@ export function UsersPage() {
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: isDark ? 'rgba(15,23,42,0.5)' : '#f8fafc' }}>
-                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Usuario</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>User</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ID</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Acciones</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -171,7 +171,7 @@ export function UsersPage() {
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
                           {u.name ?? '—'}{' '}
-                          {u.id === me?.id && <Chip label="Tú" size="small" sx={{ ml: 0.5, height: 18, fontSize: '0.65rem', bgcolor: '#4f46e5', color: '#fff' }} />}
+                          {u.id === me?.id && <Chip label="You" size="small" sx={{ ml: 0.5, height: 18, fontSize: '0.65rem', bgcolor: '#4f46e5', color: '#fff' }} />}
                         </Typography>
                       </Box>
                     </Stack>
@@ -179,12 +179,12 @@ export function UsersPage() {
                   <TableCell sx={{ fontSize: '0.85rem' }}>{u.email}</TableCell>
                   <TableCell sx={{ fontSize: '0.7rem', color: 'text.secondary', fontFamily: 'monospace' }}>{u.id.slice(0, 8)}…</TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Editar">
+                    <Tooltip title="Edit">
                       <IconButton size="small" onClick={() => handleOpenEdit(u)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title={u.id === me?.id ? 'No puedes eliminarte' : 'Eliminar'}>
+                    <Tooltip title={u.id === me?.id ? 'Cannot delete yourself' : 'Delete'}>
                       <span>
                         <IconButton size="small" color="error" disabled={u.id === me?.id} onClick={() => setDeleteConfirm(u.id)}>
                           <DeleteIcon fontSize="small" />
@@ -197,7 +197,7 @@ export function UsersPage() {
               {(users ?? []).length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                    No hay usuarios
+                    No users found
                   </TableCell>
                 </TableRow>
               )}
@@ -213,7 +213,7 @@ export function UsersPage() {
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>{editingId ? 'Editar usuario' : 'Nuevo usuario'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>{editingId ? 'Edit user' : 'New user'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             {formError && <Alert severity="error">{formError}</Alert>}
@@ -227,18 +227,18 @@ export function UsersPage() {
               autoFocus
             />
             <TextField
-              label="Nombre"
+              label="Name"
               value={form.name}
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               fullWidth
               size="small"
-              placeholder="Opcional"
+              placeholder="Optional"
             />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setOpen(false)} sx={{ borderRadius: 2 }}>
-            Cancelar
+            Cancel
           </Button>
           <Button
             variant="contained"
@@ -246,29 +246,29 @@ export function UsersPage() {
             disabled={createUser.isPending || updateUser.isPending}
             sx={{ borderRadius: 2, bgcolor: '#4f46e5' }}
           >
-            {editingId ? 'Guardar' : 'Crear'}
+            {editingId ? 'Save' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-        <DialogTitle>Eliminar usuario</DialogTitle>
+        <DialogTitle>Delete user</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            ¿Estás seguro? Esta acción no se puede deshacer. Si el usuario es dueño de tareas, deberás reasignarlas primero.
+            Are you sure? This cannot be undone. If the user owns tasks, reassign them first.
           </Typography>
           {deleteUser.isError && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {(deleteUser.error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'No se pudo eliminar'}
+              {(deleteUser.error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to delete'}
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteConfirm(null)} sx={{ borderRadius: 2 }}>
-            Cancelar
+            Cancel
           </Button>
           <Button color="error" variant="contained" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} sx={{ borderRadius: 2 }}>
-            Eliminar
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

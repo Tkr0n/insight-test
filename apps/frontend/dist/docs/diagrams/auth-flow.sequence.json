@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Cognito JWT Authentication Flow",
+    "viewBox": [780, 780],
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "login", "label": "Login flow", "focus": ["browser", "react", "cognito"], "note": "User authenticates directly with Cognito and receives JWT tokens." },
+      { "id": "authenticated-request", "label": "Authenticated request", "focus": ["react", "apigateway", "express"], "note": "Every API call includes the Authorization Bearer header." },
+      { "id": "ownership", "label": "Ownership scoping", "focus": ["express", "postgres"], "note": "Backend extracts user_id from JWT sub claim and scopes all queries." }
+    ]
+  },
+  "participants": [
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "user agent" },
+    { "id": "react", "type": "frontend", "label": "React App", "sublabel": "LoginPage.tsx" },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool" },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "REST" },
+    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "auth middleware" },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "tasks table" }
+  ],
+  "segments": [
+    { "from": 120, "to": 310, "label": "Authentication" },
+    { "from": 330, "to": 480, "label": "Authenticated API call" },
+    { "from": 500, "to": 680, "label": "Scoped query" }
+  ],
+  "messages": [
+    { "id": "login-init", "from": "browser", "to": "react", "y": 160, "label": "submit credentials", "variant": "emphasis" },
+    { "id": "cognito-auth", "from": "react", "to": "cognito", "y": 200, "label": "InitiateAuth", "variant": "security" },
+    { "id": "cognito-tokens", "from": "cognito", "to": "react", "y": 260, "label": "IdToken + AccessToken", "variant": "return" },
+    { "id": "store-token", "from": "react", "to": "browser", "y": 300, "label": "localStorage.setItem(id_token)", "variant": "dashed" },
+    { "id": "api-call", "from": "react", "to": "apigateway", "y": 360, "label": "GET /tasks  Authorization: Bearer <jwt>", "variant": "emphasis" },
+    { "id": "apigw-verify", "from": "apigateway", "to": "cognito", "y": 400, "label": "verify JWT signature", "variant": "security" },
+    { "id": "apigw-forward", "from": "apigateway", "to": "express", "y": 440, "label": "forward x-amzn-oidc-data", "variant": "default" },
+    { "id": "extract-sub", "from": "express", "to": "postgres", "y": 510, "label": "extract user_id from JWT sub", "variant": "dashed" },
+    { "id": "scoped-query", "from": "express", "to": "postgres", "y": 570, "label": "SELECT * FROM tasks WHERE owner_id = $1", "variant": "emphasis" },
+    { "id": "query-rows", "from": "postgres", "to": "express", "y": 630, "label": "rows (user-scoped)", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "react", "from": 155, "to": 640, "type": "frontend" },
+    { "participant": "cognito", "from": 195, "to": 265, "type": "security" },
+    { "participant": "apigateway", "from": 355, "to": 640, "type": "cloud" },
+    { "participant": "express", "from": 435, "to": 635, "type": "backend" },
+    { "participant": "postgres", "from": 505, "to": 635, "type": "database" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Security Tradeoff", "items": ["JWT stored in localStorage (XSS vulnerable)", "Production recommended: httpOnly cookies", "Current approach acceptable for PoC"] },
+    { "dot": "emerald", "title": "Ownership Scoping", "items": ["user_id extracted from JWT sub claim", "All DB queries scoped to owner_id", "403 returned if owner_id mismatch"] },
+    { "dot": "cyan", "title": "Token Lifecycle", "items": ["Cognito issues IdToken + AccessToken", "Frontend attaches Bearer token to every request", "API Gateway validates signature before forwarding"] }
+  ]
+}

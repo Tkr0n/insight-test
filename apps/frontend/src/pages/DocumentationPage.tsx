@@ -91,10 +91,18 @@ export function DocumentationPage() {
     setMdOpen(file);
     setMdLoading(true);
     try {
-      const res = await apiClient.get(`/docs/${encodeURIComponent(file)}`, { responseType: 'text' as never });
-      setMdContent(res.data as unknown as string);
+      const res = await fetch(`/docs/${file}`);
+      if (!res.ok) throw new Error('not found');
+      const text = await res.text();
+      setMdContent(text);
     } catch {
-      setMdContent('Failed to load document.');
+      // fallback to API (for prod where static not copied)
+      try {
+        const res = await apiClient.get(`/docs/${encodeURIComponent(file)}`, { responseType: 'text' as never });
+        setMdContent(res.data as unknown as string);
+      } catch {
+        setMdContent('Failed to load document. Expected at /docs/' + file + ' — ensure docs are copied to public/docs.');
+      }
     } finally {
       setMdLoading(false);
     }
@@ -232,7 +240,7 @@ export function DocumentationPage() {
                 <Button
                   size="small"
                   variant="contained"
-                  onClick={() => window.open(`/api/docs/${encodeURIComponent(d.file)}`, '_blank')}
+                  onClick={() => window.open(`/docs/diagrams/${encodeURIComponent(d.file)}`, '_blank')}
                   sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, bgcolor: d.color, '&:hover': { filter: 'brightness(0.9)' } }}
                 >
                   Open
@@ -269,7 +277,7 @@ export function DocumentationPage() {
           >
             <Box
               component="iframe"
-              src={`/api/docs/${encodeURIComponent(getDiagram(previewDiagram)!.file)}`}
+              src={`/docs/diagrams/${encodeURIComponent(getDiagram(previewDiagram)!.file)}`}
               sx={{ width: '100%', height: '100%', border: 0 }}
               title="Diagram preview"
             />
