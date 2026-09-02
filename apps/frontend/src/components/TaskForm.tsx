@@ -181,7 +181,6 @@ export function TaskForm({
                 onChange={handleDateChange('startDate')}
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
-                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 label="Due Date"
@@ -192,7 +191,6 @@ export function TaskForm({
                 error={Boolean(dateError)}
                 helperText={dateError ? 'Due date cannot be before start date' : undefined}
                 slotProps={{ inputLabel: { shrink: true } }}
-                InputLabelProps={{ shrink: true }}
               />
             </Stack>
             {dateError ? (

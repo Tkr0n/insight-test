@@ -19,5 +19,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src"],
-  "exclude": ["src/tests"]
+  "exclude": ["src/tests", "src/**/*.test.*", "src/**/__tests__/**"]
 }
