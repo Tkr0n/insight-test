@@ -223,6 +223,15 @@ resource "aws_ecs_task_definition" "frontend" {
       hostPort      = var.frontend_port
       protocol      = "tcp"
     }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.frontend.name
+        "awslogs-region"        = data.aws_region.current.name
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
   }])
 
   tags = {
@@ -254,6 +263,15 @@ resource "aws_ecs_task_definition" "backend" {
       name  = k
       value = v
     }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.backend.name
+        "awslogs-region"        = data.aws_region.current.name
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
   }])
 
   tags = {
