@@ -47,13 +47,19 @@ export function UsersPage() {
   const [form, setForm] = useState<UserForm>({ email: '', name: '' });
   const [formError, setFormError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+
+  const closeCreateModal = () => {
+    setOpen(false);
+    setCreated(null);
+    setEditingId(null);
+  };
 
   const handleOpenCreate = () => {
     setEditingId(null);
     setForm({ email: '', name: '' });
     setFormError('');
-    setCreatedPassword(null);
+    setCreated(null);
     setOpen(true);
   };
 
@@ -61,6 +67,7 @@ export function UsersPage() {
     setEditingId(u.id);
     setForm({ email: u.email, name: u.name ?? '' });
     setFormError('');
+    setCreated(null);
     setOpen(true);
   };
 
@@ -85,8 +92,8 @@ export function UsersPage() {
     } else {
       createUser.mutate(payload, {
         onSuccess: (data) => {
-          setOpen(false);
-          setCreatedPassword(data.temporaryPassword);
+          setFormError('');
+          setCreated({ email: data.user.email, password: data.temporaryPassword });
         },
         onError: (e: unknown) => {
           const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create';
@@ -223,47 +230,76 @@ export function UsersPage() {
 
       <Dialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={closeCreateModal}
         maxWidth="xs"
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>{editingId ? 'Edit user' : 'New user'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {formError && <Alert severity="error">{formError}</Alert>}
-            <TextField
-              label="Email"
-              value={form.email}
-              onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-              fullWidth
-              size="small"
-              type="email"
-              autoFocus
-            />
-            <TextField
-              label="Name"
-              value={form.name}
-              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-              fullWidth
-              size="small"
-              placeholder="Optional"
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)} sx={{ borderRadius: 2 }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={createUser.isPending || updateUser.isPending}
-            sx={{ borderRadius: 2, bgcolor: '#4f46e5' }}
-          >
-            {editingId ? 'Save' : 'Create'}
-          </Button>
-        </DialogActions>
+        <DialogTitle sx={{ fontWeight: 700 }}>{editingId ? 'Edit user' : created ? 'User created' : 'New user'}</DialogTitle>
+        {created ? (
+          <>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <Alert severity="success">
+                  {created.email} was created. Share this temporary password with them — they'll be required to change it on first login.
+                </Alert>
+                <TextField
+                  label="Temporary password"
+                  value={created.password}
+                  fullWidth
+                  size="small"
+                  slotProps={{
+                    htmlInput: { readOnly: true },
+                    input: { sx: { fontFamily: 'monospace' } },
+                  }}
+                />
+              </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button variant="contained" onClick={closeCreateModal} sx={{ borderRadius: 2, bgcolor: '#4f46e5' }}>
+                Done
+              </Button>
+            </DialogActions>
+          </>
+        ) : (
+          <>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                {formError && <Alert severity="error">{formError}</Alert>}
+                <TextField
+                  label="Email"
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  fullWidth
+                  size="small"
+                  type="email"
+                  autoFocus
+                />
+                <TextField
+                  label="Name"
+                  value={form.name}
+                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                  fullWidth
+                  size="small"
+                  placeholder="Optional"
+                />
+              </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button onClick={closeCreateModal} sx={{ borderRadius: 2 }}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={createUser.isPending || updateUser.isPending}
+                sx={{ borderRadius: 2, bgcolor: '#4f46e5' }}
+              >
+                {editingId ? 'Save' : 'Create'}
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
 
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
@@ -284,29 +320,6 @@ export function UsersPage() {
           </Button>
           <Button color="error" variant="contained" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} sx={{ borderRadius: 2 }}>
             Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={createdPassword !== null} onClose={() => setCreatedPassword(null)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-        <DialogTitle>User created</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Share this temporary password with the user. They'll be required to change it on first login.
-          </Typography>
-          <TextField
-            value={createdPassword ?? ''}
-            fullWidth
-            size="small"
-            slotProps={{
-              htmlInput: { readOnly: true },
-              input: { sx: { fontFamily: 'monospace' } },
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreatedPassword(null)} sx={{ borderRadius: 2 }}>
-            Done
           </Button>
         </DialogActions>
       </Dialog>

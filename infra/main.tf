@@ -134,3 +134,23 @@ resource "aws_iam_role_policy" "backend_lambda_invoke" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "backend_cognito_admin" {
+  name   = "${var.project_name}-backend-cognito-admin"
+  role   = module.ecs.task_role_name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminConfirmSignUp",
+          "cognito-idp:AdminUpdateUserAttributes",
+          "cognito-idp:AdminDeleteUser",
+        ]
+        Resource = module.cognito.user_pool_arn
+      },
+    ]
+  })
+}
