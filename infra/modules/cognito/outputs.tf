@@ -7,3 +7,8 @@ output "client_id" {
   description = "Cognito App Client ID"
   value       = aws_cognito_user_pool_client.spa.id
 }
+
+output "user_pool_arn" {
+  description = "Cognito User Pool ARN"
+  value       = aws_cognito_user_pool.main.arn
+}

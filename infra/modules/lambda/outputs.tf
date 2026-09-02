@@ -8,6 +8,11 @@ output "function_name" {
   value       = aws_lambda_function.markAsDone.function_name
 }
 
+output "invoke_arn" {
+  description = "Lambda invoke ARN for API Gateway"
+  value       = aws_lambda_function.markAsDone.invoke_arn
+}
+
 output "security_group_id" {
   description = "Lambda security group ID"
   value       = aws_security_group.lambda.id

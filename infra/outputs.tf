@@ -32,3 +32,18 @@ output "lambda_function_arn" {
   description = "Lambda function ARN"
   value       = module.lambda.function_arn
 }
+
+output "api_url" {
+  description = "API Gateway invoke URL"
+  value       = module.apigateway.api_url
+}
+
+output "cloudfront_domain" {
+  description = "CloudFront distribution domain"
+  value       = module.cloudfront.domain_name
+}
+
+output "frontend_bucket" {
+  description = "S3 bucket for frontend"
+  value       = module.s3.bucket_id
+}
