@@ -142,3 +142,38 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest-amd64 \
             ${{ env.IMAGE_NAME }}:latest-arm64
           docker manifest push ${{ env.IMAGE_NAME }}:latest
+
+  deploy-infrastructure:
+    needs: [merge-backend, merge-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.12.6"
+
+      - name: Terraform Init
+        run: tofu init
+        working-directory: infra
+
+      - name: Terraform Plan
+        run: tofu plan -input=false -out=tfplan
+        working-directory: infra
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+      - name: Terraform Apply
+        run: tofu apply -input=false -auto-approve tfplan
+        working-directory: infra
