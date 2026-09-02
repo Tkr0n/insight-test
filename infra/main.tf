@@ -69,17 +69,8 @@ module "apigateway" {
   cognito_pool_arn  = module.cognito.user_pool_arn
 }
 
-module "cloudfront" {
-  source = "./modules/cloudfront"
-
-  project_name         = var.project_name
-  s3_bucket_domain_name = module.s3.bucket_domain_name
-  api_gateway_domain   = module.apigateway.api_url
-}
-
 module "s3" {
   source = "./modules/s3"
 
-  project_name      = var.project_name
-  cloudfront_oai_arn = module.cloudfront.oai_arn
+  project_name = var.project_name
 }

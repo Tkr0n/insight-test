@@ -38,17 +38,12 @@ output "api_url" {
   value       = module.apigateway.api_url
 }
 
-output "cloudfront_domain" {
-  description = "CloudFront distribution domain"
-  value       = module.cloudfront.domain_name
-}
-
 output "frontend_bucket" {
   description = "S3 bucket for frontend"
   value       = module.s3.bucket_id
 }
 
 output "frontend_url" {
-  description = "Frontend CloudFront URL"
-  value       = "https://${module.cloudfront.domain_name}"
+  description = "Frontend S3 website URL"
+  value       = "http://${module.s3.website_endpoint}"
 }

@@ -8,7 +8,7 @@ output "bucket_arn" {
   value       = aws_s3_bucket.frontend.arn
 }
 
-output "bucket_domain_name" {
-  description = "S3 bucket domain name"
-  value       = aws_s3_bucket.frontend.bucket_domain_name
+output "website_endpoint" {
+  description = "S3 website endpoint"
+  value       = aws_s3_bucket_website_configuration.frontend.website_endpoint
 }
