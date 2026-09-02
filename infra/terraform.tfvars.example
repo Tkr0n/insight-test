@@ -1,0 +1,5 @@
+aws_region  = "us-east-1"
+project_name = "insightt"
+db_password = "CHANGE_ME_STRONG_PASSWORD"
+db_name     = "insightt_db"
+db_user     = "insightt_user"
