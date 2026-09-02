@@ -267,7 +267,7 @@ export function DashboardPage() {
     : {
         title: '',
         description: '',
-        assigneeId: null,
+        assigneeId: currentUserId ?? null,
         startDate: null,
         dueDate: null,
         urgency: 2,

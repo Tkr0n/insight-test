@@ -120,6 +120,7 @@ export function TaskForm({
     e.preventDefault();
     if (!values.title.trim()) return;
     if (dateError) return;
+    if (!values.assigneeId) return;
     onSubmit(values);
   };
 
@@ -259,11 +260,7 @@ export function TaskForm({
                     label="Assignee"
                     value={values.assigneeId ?? ''}
                     onChange={handleSelectChange('assigneeId')}
-                    displayEmpty
                   >
-                    <MenuItem value="">
-                      <em>Unassigned</em>
-                    </MenuItem>
                     {usersData.map((u) => (
                       <MenuItem key={u.id} value={u.id}>
                         {u.name ? `${u.name} (${u.email})` : u.email}
@@ -278,7 +275,6 @@ export function TaskForm({
                   onChange={handleChange('assigneeId')}
                   fullWidth
                   size="small"
-                  placeholder="Enter assignee user ID"
                   helperText="User list unavailable — enter ID manually"
                 />
               )
@@ -289,7 +285,6 @@ export function TaskForm({
                 onChange={handleChange('assigneeId')}
                 fullWidth
                 size="small"
-                placeholder="Loading users..."
                 disabled
               />
             )}
@@ -302,7 +297,7 @@ export function TaskForm({
           <Button
             type="submit"
             variant="contained"
-            disabled={isLoading || !values.title.trim() || Boolean(dateError)}
+            disabled={isLoading || !values.title.trim() || Boolean(dateError) || !values.assigneeId}
             sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}
           >
             {isLoading ? 'Saving...' : 'Save'}

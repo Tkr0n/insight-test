@@ -156,6 +156,8 @@ describe('TaskForm', () => {
     // Title empty -> disabled
     expect(saveBtn).toBeDisabled();
     await user.type(screen.getByLabelText(/Title/i), 'X');
+    // Still disabled until an assignee is chosen (no unassigned tasks)
+    await user.type(screen.getByLabelText(/Assignee ID/i), 'user-1');
     expect(saveBtn).toBeEnabled();
     await user.clear(screen.getByLabelText(/Title/i));
     expect(saveBtn).toBeDisabled();
