@@ -3,6 +3,11 @@ output "endpoint" {
   value       = aws_db_instance.main.endpoint
 }
 
+output "hostname" {
+  description = "RDS hostname (without port)"
+  value       = aws_db_instance.main.address
+}
+
 output "port" {
   description = "RDS port"
   value       = aws_db_instance.main.port

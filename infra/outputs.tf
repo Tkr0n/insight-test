@@ -13,6 +13,11 @@ output "rds_endpoint" {
   value       = module.rds.endpoint
 }
 
+output "rds_hostname" {
+  description = "RDS hostname"
+  value       = module.rds.hostname
+}
+
 output "rds_port" {
   description = "RDS port"
   value       = module.rds.port

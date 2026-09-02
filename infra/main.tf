@@ -94,7 +94,7 @@ module "ecs" {
   backend_port  = 3000
   
   backend_env = {
-    DATABASE_URL      = "postgresql://${var.db_user}:${var.db_password}@${module.rds.endpoint}:${module.rds.port}/${var.db_name}"
+    DATABASE_URL      = "postgresql://${var.db_user}:${var.db_password}@${module.rds.hostname}:${module.rds.port}/${var.db_name}"
     REDIS_URL         = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
     AWS_REGION        = var.aws_region
     COGNITO_USER_POOL_ID = module.cognito.user_pool_id

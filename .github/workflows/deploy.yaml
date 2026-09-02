@@ -246,7 +246,7 @@ jobs:
           SERVICE=$(tofu output -raw backend_service_name)
           TASK_DEF=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --query "services[0].taskDefinition" --output text)
           
-          DB_ENDPOINT=$(tofu output -raw rds_endpoint)
+          DB_HOSTNAME=$(tofu output -raw rds_hostname)
           DB_PORT=$(tofu output -raw rds_port)
           REDIS_ENDPOINT=$(tofu output -raw redis_endpoint)
           REDIS_PORT=$(tofu output -raw redis_port)
@@ -260,7 +260,7 @@ jobs:
             --cpu 256 \
             --memory 512 \
             --execution-role-arn $(aws ecs describe-task-definition --task-definition $TASK_DEF --query "taskDefinition.executionRoleArn" --output text) \
-            --container-definitions "[{\"name\":\"backend\",\"image\":\"ghcr.io/tkr0n/insight-test/insightt-backend:latest\",\"essential\":true,\"portMappings\":[{\"containerPort\":3000,\"hostPort\":3000,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"DATABASE_URL\",\"value\":\"postgresql://insight_test_user:${{ secrets.DB_PASSWORD }}@$DB_ENDPOINT:$DB_PORT/insight_test_db\"},{\"name\":\"REDIS_URL\",\"value\":\"redis://$REDIS_ENDPOINT:$REDIS_PORT\"},{\"name\":\"AWS_REGION\",\"value\":\"us-east-2\"},{\"name\":\"COGNITO_USER_POOL_ID\",\"value\":\"$COGNITO_POOL_ID\"},{\"name\":\"COGNITO_CLIENT_ID\",\"value\":\"$COGNITO_CLIENT_ID\"},{\"name\":\"NODE_ENV\",\"value\":\"production\"},{\"name\":\"PORT\",\"value\":\"3000\"},{\"name\":\"CORS_ORIGIN\",\"value\":\"*\"}]}]" \
+            --container-definitions "[{\"name\":\"backend\",\"image\":\"ghcr.io/tkr0n/insight-test/insightt-backend:latest\",\"essential\":true,\"portMappings\":[{\"containerPort\":3000,\"hostPort\":3000,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"DATABASE_URL\",\"value\":\"postgresql://insight_test_user:${{ secrets.DB_PASSWORD }}@$DB_HOSTNAME:$DB_PORT/insight_test_db\"},{\"name\":\"REDIS_URL\",\"value\":\"redis://$REDIS_ENDPOINT:$REDIS_PORT\"},{\"name\":\"AWS_REGION\",\"value\":\"us-east-2\"},{\"name\":\"COGNITO_USER_POOL_ID\",\"value\":\"$COGNITO_POOL_ID\"},{\"name\":\"COGNITO_CLIENT_ID\",\"value\":\"$COGNITO_CLIENT_ID\"},{\"name\":\"NODE_ENV\",\"value\":\"production\"},{\"name\":\"PORT\",\"value\":\"3000\"},{\"name\":\"CORS_ORIGIN\",\"value\":\"*\"}]}]" \
             > /dev/null
           
           aws ecs update-service \
