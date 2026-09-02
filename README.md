@@ -10,8 +10,8 @@ A web SPA application for task management (CRUD) protected by authentication. Th
 * **Backend:** Node.js + Express + TypeScript + Prisma ORM + Zod
 * **Database:** PostgreSQL + PgBouncer (Connection Pooling)
 * **Cache / State:** Redis
-* **Authentication:** AWS Cognito (via LocalStack)
-* **Serverless:** AWS Lambda (via LocalStack)
+* **Authentication:** AWS Cognito
+* **Serverless:** AWS Lambda
 * **Local Infrastructure:** Docker Compose (ARM64 support for Raspberry Pi 5)
 
 ## Technical Documentation

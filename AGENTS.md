@@ -4,7 +4,7 @@ Your code must be production-ready, highly concurrent, scalable, secure, and fol
 
 # Project Overview
 A Task Management System with authentication and strict business rules. 
-The architecture simulates a Cloud-Native environment using Docker, LocalStack (AWS), PostgreSQL, and Redis.
+The architecture simulates a Cloud-Native environment using Docker, PostgreSQL, and Redis.
 
 # Context & Documentation Mapping (CRITICAL)
 Before implementing any feature, you MUST READ the corresponding documentation in the `./docs/` folder to understand constraints and design decisions. If you make structural changes, you MUST UPDATE the respective document:
@@ -19,7 +19,7 @@ Before implementing any feature, you MUST READ the corresponding documentation i
 - **Backend:** Node.js, Express, TypeScript, Prisma ORM, Zod, Jest + Supertest.
 - **Database:** PostgreSQL (with PgBouncer for connection pooling).
 - **Cache/Idempotency:** Redis (via ioredis).
-- **Cloud/Auth (Emulated):** LocalStack (AWS Cognito for Auth, AWS Lambda for the `markAsDone` endpoint).
+- **Cloud/Auth:** AWS Cognito for Auth, AWS Lambda for the `markAsDone` endpoint.
 
 # Architecture & Code Rules
 

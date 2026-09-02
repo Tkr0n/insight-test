@@ -9,7 +9,7 @@ The REST standard is used since the domain (Task CRUD) is flat, making it natura
 To demonstrate Cloud ecosystem expertise and decoupling of intensive processes, this use case is externalized to an **AWS Lambda**:
 1. The client sends a `PATCH /tasks/{id}/done` including the `Idempotency-Key` header.
 2. The API intercepts the request and validates idempotency against **Redis**.
-3. If valid, the API invokes the Lambda function (deployed on LocalStack) via the AWS SDK.
+3. If valid, the API invokes the Lambda function (deployed on AWS) via the AWS SDK.
 4. The Lambda processes the transaction in PostgreSQL and responds to the API, which returns to the client.
 
 ## Advanced Technical Considerations (High Concurrency)

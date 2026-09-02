@@ -1,10 +1,10 @@
-describe('Full Flow (LocalStack)', () => {
+describe('Full Flow (AWS Cognito)', () => {
   const email = Cypress.env('COGNITO_TEST_EMAIL');
   const password = Cypress.env('COGNITO_TEST_PASSWORD');
 
   before(() => {
     if (!email || !password) {
-      cy.log('Skipping LocalStack tests: CYPRESS_COGNITO_EMAIL and CYPRESS_COGNITO_PASSWORD not set');
+      cy.log('Skipping integration tests: CYPRESS_COGNITO_EMAIL and CYPRESS_COGNITO_PASSWORD not set');
       this.skip();
     }
   });

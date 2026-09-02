@@ -33,7 +33,6 @@ cypress/screenshots/
 # Docker & Local Infrastructure
 # =========================
 # Ignore local volumes if they are mapped to project folders.
-.localstack/
 /data/
 /postgres-data/
 /redis-data/

@@ -9,7 +9,40 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: apps/backend
+      - name: Run tests
+        run: npm test
+        working-directory: apps/backend
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: apps/frontend
+      - name: Run tests
+        run: npm test
+        working-directory: apps/frontend
+
   build-backend-arm:
+    needs: [test-backend]
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
@@ -33,6 +66,7 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:latest-arm64
 
   build-backend-amd64:
+    needs: [test-backend]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -77,6 +111,7 @@ jobs:
           docker manifest push ${{ env.IMAGE_NAME }}:latest
 
   build-frontend-arm:
+    needs: [test-frontend]
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
@@ -100,6 +135,7 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:latest-arm64
 
   build-frontend-amd64:
+    needs: [test-frontend]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -168,6 +204,13 @@ jobs:
         run: tofu init
         working-directory: infra
 
+      - name: Import existing S3 buckets
+        run: |
+          tofu import module.s3.aws_s3_bucket.frontend insight-test-frontend || true
+        working-directory: infra
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
       - name: Terraform Plan
         run: tofu plan -input=false -out=tfplan
         working-directory: infra
@@ -176,4 +219,13 @@ jobs:
 
       - name: Terraform Apply
         run: tofu apply -input=false -auto-approve tfplan
+        working-directory: infra
+
+      - name: Get frontend URL
+        id: frontend-url
+        run: |
+          URL=$(tofu output -raw frontend_url)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "## Frontend URL" >> $GITHUB_STEP_SUMMARY
+          echo "$URL" >> $GITHUB_STEP_SUMMARY
         working-directory: infra

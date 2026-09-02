@@ -80,25 +80,25 @@ resource "null_resource" "test_users" {
   }
 
   provisioner "local-exec" {
-    interpreter = ["powershell", "-Command"]
+    interpreter = ["/bin/bash", "-c"]
     command = <<-EOT
-      $ErrorActionPreference = "SilentlyContinue"
+      set -e
 
-      # Sign up
-      aws cognito-idp sign-up `
-        --client-id "${aws_cognito_user_pool_client.spa.id}" `
-        --username "${each.key}" `
-        --password "TestPass123" `
-        --user-attributes "Name=email,Value=${each.key}" "Name=name,Value=Test User" `
-        --region "${var.aws_region}"
+      # Sign up (ignore error if user already exists)
+      aws cognito-idp sign-up \
+        --client-id "${aws_cognito_user_pool_client.spa.id}" \
+        --username "${each.key}" \
+        --password "TestPass123" \
+        --user-attributes "Name=email,Value=${each.key}" "Name=name,Value=Test User" \
+        --region "${var.aws_region}" || true
 
-      # Auto-confirm
-      aws cognito-idp admin-confirm-sign-up `
-        --user-pool-id "${aws_cognito_user_pool.main.id}" `
-        --username "${each.key}" `
-        --region "${var.aws_region}"
+      # Auto-confirm (ignore error if already confirmed)
+      aws cognito-idp admin-confirm-sign-up \
+        --user-pool-id "${aws_cognito_user_pool.main.id}" \
+        --username "${each.key}" \
+        --region "${var.aws_region}" || true
 
-      Write-Host "User ${each.key} created/confirmed"
+      echo "User ${each.key} created/confirmed"
     EOT
   }
 

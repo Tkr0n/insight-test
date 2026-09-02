@@ -25,7 +25,7 @@ npm run test:coverage # Coverage report
 
 ## End-to-End (E2E) Tests
 * **Tool:** Cypress
-* **Config:** `apps/frontend/cypress.config.ts` (stub-based), `cypress.config.integration.ts` (LocalStack)
+* **Config:** `apps/frontend/cypress.config.ts` (stub-based), `cypress.config.integration.ts` (AWS Cognito)
 * **Objective:** Simulate a complete real-world user flow:
   1. Navigate to the web application.
   2. Log in using the form interacting with Cognito.
@@ -40,8 +40,8 @@ npm run test:coverage # Coverage report
 - Fast, no external dependencies
 - Run with: `npm run test:e2e` (headless) or `npm run test:e2e:open` (interactive)
 
-**LocalStack (integration):**
-- Runs against real Cognito via LocalStack Docker
+**AWS Cognito (integration):**
+- Runs against real AWS Cognito
 - Requires `CYPRESS_COGNITO_EMAIL` and `CYPRESS_COGNITO_PASSWORD` env vars
 - Run with: `npm run test:e2e:integration` (headless) or `npm run test:e2e:integration:open` (interactive)
 
@@ -51,15 +51,15 @@ npm run test:coverage # Coverage report
 | Login | `cypress/e2e/stub/login.cy.ts` | Form render, error on wrong credentials, success redirect, loading state |
 | Task Creation | `cypress/e2e/stub/task-creation.cy.ts` | Create task flow, empty state message |
 | Loading States | `cypress/e2e/stub/loading-states.cy.ts` | Skeleton placeholders during load, button loading text |
-| Full Flow | `cypress/e2e/localstack/full-flow.cy.ts` | Complete login → create task → verify (LocalStack) |
+| Full Flow | `cypress/e2e/integration/full-flow.cy.ts` | Complete login → create task → verify (AWS Cognito) |
 
 ### Run Commands
 ```bash
 cd apps/frontend
 npm run test:e2e                # Headless E2E (stub)
 npm run test:e2e:open           # Interactive E2E (stub)
-npm run test:e2e:integration    # Headless E2E (LocalStack)
-npm run test:e2e:integration:open # Interactive E2E (LocalStack)
+npm run test:e2e:integration    # Headless E2E (AWS Cognito)
+npm run test:e2e:integration:open # Interactive E2E (AWS Cognito)
 ```
 
 ## Unit Tests (Frontend)

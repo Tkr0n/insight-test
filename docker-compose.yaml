@@ -26,8 +26,6 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
-      AWS_ENDPOINT: ${AWS_ENDPOINT:-http://localstack:4566}
-      LOCALSTACK_ENDPOINT: ${LOCALSTACK_ENDPOINT:-http://localstack:4566}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
       COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}
     depends_on:
@@ -35,8 +33,6 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
-      localstack:
-        condition: service_started
     networks:
       - insightt_network
 
@@ -101,30 +97,9 @@ services:
       timeout: 5s
       retries: 5
 
-  localstack:
-    image: localstack/localstack:3.5
-    container_name: insightt_localstack
-    restart: unless-stopped
-    ports:
-      - "${LOCALSTACK_PORT:-4566}:4566"
-    environment:
-      SERVICES: cognito,lambda
-      PERSISTENCE: 1
-      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
-      DOCKER_HOST: unix:///var/run/docker.sock
-    volumes:
-      - localstack_data:/var/lib/localstack
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./infra/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
-    networks:
-      - insightt_network
-
 volumes:
   postgres_data:
   redis_data:
-  localstack_data:
 
 networks:
   insightt_network:

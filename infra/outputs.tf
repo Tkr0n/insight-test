@@ -47,3 +47,8 @@ output "frontend_bucket" {
   description = "S3 bucket for frontend"
   value       = module.s3.bucket_id
 }
+
+output "frontend_url" {
+  description = "Frontend CloudFront URL"
+  value       = "https://${module.cloudfront.domain_name}"
+}

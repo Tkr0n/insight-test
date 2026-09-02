@@ -27,18 +27,13 @@ export async function resolveCognitoConfig(): Promise<CognitoConfig | null> {
 
   const client = new CognitoIdentityProviderClient({
     region: env.AWS_REGION,
-    endpoint: env.LOCALSTACK_ENDPOINT,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'test',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'test',
-    },
   });
 
   try {
     const poolsRes = await client.send(new ListUserPoolsCommand({ MaxResults: 10 }));
     const pool = poolsRes.UserPools?.[0];
     if (!pool?.Id) {
-      console.warn('[cognito] No User Pool found in LocalStack — auth disabled until env vars are set');
+      console.warn('[cognito] No User Pool found — auth disabled until env vars are set');
       return null;
     }
     const userPoolId = pool.Id;
@@ -48,7 +43,7 @@ export async function resolveCognitoConfig(): Promise<CognitoConfig | null> {
     );
     const appClient = clientsRes.UserPoolClients?.[0];
     if (!appClient?.ClientId) {
-      console.warn('[cognito] No App Client found in LocalStack — auth disabled until env vars are set');
+      console.warn('[cognito] No App Client found — auth disabled until env vars are set');
       return null;
     }
     const clientId = appClient.ClientId;
@@ -61,7 +56,7 @@ export async function resolveCognitoConfig(): Promise<CognitoConfig | null> {
 
     return cachedConfig;
   } catch (err) {
-    console.warn('[cognito] Could not resolve from LocalStack (community edition?) — auth disabled until env vars are set', err);
+    console.warn('[cognito] Could not resolve Cognito config — auth disabled until env vars are set', err);
     return null;
   }
 }

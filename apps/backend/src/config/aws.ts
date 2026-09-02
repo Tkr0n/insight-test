@@ -4,10 +4,8 @@ import { env } from './env';
 
 export const lambdaClient = new LambdaClient({
   region: env.AWS_REGION,
-  endpoint: env.LOCALSTACK_ENDPOINT,
 });
 
 export const cognitoClient = new CognitoIdentityProviderClient({
   region: env.AWS_REGION,
-  endpoint: env.LOCALSTACK_ENDPOINT,
 });
