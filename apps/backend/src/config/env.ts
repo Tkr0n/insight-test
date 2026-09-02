@@ -12,6 +12,7 @@ const envSchema = z.object({
   CSRF_SECRET: z.string().default('insightt-csrf-secret-change-in-prod-32-chars'),
   COOKIE_SECURE: z.preprocess((v) => v === 'true', z.boolean().default(false)),
   LAMBDA_FUNCTION_NAME: z.string().default('markAsDone'),
+  ADMIN_EMAIL: z.string().default('admin@insightt.com'),
 });
 
 export const env = envSchema.parse(process.env);

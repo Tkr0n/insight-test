@@ -116,6 +116,7 @@ module "ecs" {
     CORS_ORIGIN            = "https://${var.domain_name}"
     CSRF_SECRET            = var.csrf_secret
     COOKIE_SECURE          = "true"
+    ADMIN_EMAIL            = "admin@insightt.com"
   }
 }
 

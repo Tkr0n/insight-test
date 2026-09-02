@@ -47,11 +47,13 @@ export function UsersPage() {
   const [form, setForm] = useState<UserForm>({ email: '', name: '' });
   const [formError, setFormError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [createdPassword, setCreatedPassword] = useState<string | null>(null);
 
   const handleOpenCreate = () => {
     setEditingId(null);
     setForm({ email: '', name: '' });
     setFormError('');
+    setCreatedPassword(null);
     setOpen(true);
   };
 
@@ -82,7 +84,10 @@ export function UsersPage() {
       );
     } else {
       createUser.mutate(payload, {
-        onSuccess: () => setOpen(false),
+        onSuccess: (data) => {
+          setOpen(false);
+          setCreatedPassword(data.temporaryPassword);
+        },
         onError: (e: unknown) => {
           const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to create';
           setFormError(msg);
@@ -96,6 +101,16 @@ export function UsersPage() {
       onSuccess: () => setDeleteConfirm(null),
     });
   };
+
+  const isAdmin = me?.isAdmin === true;
+
+  if (me && !isAdmin) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Alert severity="error">Access restricted to administrators.</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -269,6 +284,27 @@ export function UsersPage() {
           </Button>
           <Button color="error" variant="contained" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} sx={{ borderRadius: 2 }}>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={createdPassword !== null} onClose={() => setCreatedPassword(null)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+        <DialogTitle>User created</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Share this temporary password with the user. They'll be required to change it on first login.
+          </Typography>
+          <TextField
+            value={createdPassword ?? ''}
+            fullWidth
+            size="small"
+            inputProps={{ readOnly: true }}
+            slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreatedPassword(null)} sx={{ borderRadius: 2 }}>
+            Done
           </Button>
         </DialogActions>
       </Dialog>

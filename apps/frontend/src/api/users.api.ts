@@ -17,8 +17,11 @@ export async function fetchAllUsers(): Promise<(User & { createdAt?: string })[]
   return response.data.data;
 }
 
-export async function createUser(data: { email: string; name?: string | null }): Promise<User> {
-  const response = await apiClient.post<ApiResponse<User>>('/users', data);
+export async function createUser(data: { email: string; name?: string | null }): Promise<{
+  user: User;
+  temporaryPassword: string;
+}> {
+  const response = await apiClient.post<ApiResponse<{ user: User; temporaryPassword: string }>>('/users', data);
   return response.data.data;
 }
 

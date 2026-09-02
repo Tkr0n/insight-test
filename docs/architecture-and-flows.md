@@ -61,13 +61,19 @@ If an attacker injects malicious JavaScript (XSS), they can execute `localStorag
 - `POST /api/auth/logout` clears both cookies (`clearCookie` with same `Secure/SameSite/Path` opts).
 
 ### Current Auth Identity Endpoint
-`GET /api/auth/me` (authenticated) returns `{ id, email }` from the verified JWT. The dashboard (`DashboardPage`) uses `useCurrentUser()` to resolve `currentUserId` reliably even when `localStorage id_token` is absent (httpOnly). A localStorage fallback `getLocalUserId()` remains for migration.
+`GET /api/auth/me` (authenticated) returns `{ id, email, isAdmin }` from the verified JWT. `isAdmin` is `email === env.ADMIN_EMAIL` (default `admin@insightt.com`). The dashboard (`DashboardPage`) uses `useCurrentUser()` to resolve `currentUserId` reliably even when `localStorage id_token` is absent (httpOnly). `Layout` uses `isAdmin` to show/hide the **Users** entry, so non-admins never see the user-management menu.
+
+### User Registration & Password Lifecycle
+- `POST /api/auth/register {email,password,name?}` → Cognito `SignUp` + `admin-confirm-sign-up` (no email delivery is configured, so the account is active immediately).
+- Admins create users through `POST /api/users` (admin-only): it creates the Cognito user via `AdminCreateUser` with a random temporary password (`MessageAction: SUPPRESS`) → status `FORCE_CHANGE_PASSWORD`, and returns `{ user, temporaryPassword }` for the admin to share.
+- On first login the temporary password makes `InitiateAuth` return a `NEW_PASSWORD_REQUIRED` challenge; the backend responds `{ challenge, session }` (no cookies yet), the client calls `POST /api/auth/change-password {email,session,newPassword}` → `RespondToAuthChallenge` → session cookies are issued.
+- `POST/PUT/DELETE /api/users` are guarded by `requireAdmin` (`email === env.ADMIN_EMAIL`); reads (`GET /users`, `/users/all`) stay open to authenticated users for the assignee dropdowns.
 
 ## Layout & Navigation
 
 `Layout.tsx` renders a sticky `AppBar` with:
 - **Left:** Logo (`TaskAlt`) + `Insightt` title (navigates to `/tasks`).
-- **Center (desktop, `md`+):** 3 pill buttons: `Tareas` (→ `/tasks`), `Usuarios` (Menu: Listar / Crear), `Documentación` (Menu: Markdown docs + HTML diagrams). Centered via `flex:1 justifyContent:center`.
+- **Center (desktop, `md`+):** `Tasks` (→ `/tasks`), `Users` (admin-only, → `/users`), `Documentation` (Menu: Markdown docs + HTML diagrams that open in a new tab). Centered via `flex:1 justifyContent:center`.
 - **Right:** Dark mode toggle (`useColorMode`) + Logout.
 - **Mobile (`down(md)`):** Hamburger `Drawer` (right, 300px) with collapsible `Usuarios` and `Documentación` sections plus theme toggle. `useMediaQuery` controls switching.
 

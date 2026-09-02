@@ -38,6 +38,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useColorMode } from '../theme/ColorModeContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { apiClient } from '../api/axios-client';
 import { DIAGRAMS } from '../pages/DocumentationPage';
 
@@ -91,6 +92,8 @@ export function Layout({ children }: LayoutProps) {
   const theme = useTheme();
   const isMobileNav = useMediaQuery(theme.breakpoints.down('md'));
   const { mode, toggleMode } = useColorMode();
+  const { data: me } = useCurrentUser();
+  const isAdmin = me?.isAdmin === true;
 
   const [docsAnchor, setDocsAnchor] = useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -172,12 +175,14 @@ export function Layout({ children }: LayoutProps) {
                 Tasks
               </Button>
 
-              <NavButton
-                label="Users"
-                icon={<UsersIcon sx={{ fontSize: 18 }} />}
-                active={isActive('/users')}
-                onClick={() => navigate('/users')}
-              />
+              {isAdmin && (
+                <NavButton
+                  label="Users"
+                  icon={<UsersIcon sx={{ fontSize: 18 }} />}
+                  active={isActive('/users')}
+                  onClick={() => navigate('/users')}
+                />
+              )}
               <NavButton
                 label="Documentation"
                 icon={<DocsIcon sx={{ fontSize: 18 }} />}
@@ -341,12 +346,14 @@ export function Layout({ children }: LayoutProps) {
             <ListItemText primary="Tasks" />
           </ListItemButton>
 
-          <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/users'); }} selected={isActive('/users')}>
-            <ListItemIcon>
-              <UsersIcon />
-            </ListItemIcon>
-            <ListItemText primary="Users" />
-          </ListItemButton>
+          {isAdmin && (
+            <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/users'); }} selected={isActive('/users')}>
+              <ListItemIcon>
+                <UsersIcon />
+              </ListItemIcon>
+              <ListItemText primary="Users" />
+            </ListItemButton>
+          )}
 
           <ListItemButton onClick={() => setDrawerDocsOpen((v) => !v)}>
             <ListItemIcon>
