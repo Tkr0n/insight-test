@@ -71,7 +71,9 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     return;
   }
 
-  const cookieToken = (req as Request & { cookies?: Record<string, string> }).cookies?.['__Host-id_token'];
+  const cookieToken =
+    (req as Request & { cookies?: Record<string, string> }).cookies?.['id_token'] ??
+    (req as Request & { cookies?: Record<string, string> }).cookies?.['__Host-id_token'];
   const authHeader = req.headers.authorization;
 
   let token: string | undefined;
