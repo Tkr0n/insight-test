@@ -40,6 +40,41 @@ import { useTheme } from '@mui/material/styles';
 import { useColorMode } from '../theme/ColorModeContext';
 import { apiClient } from '../api/axios-client';
 
+function NavButton({
+  label,
+  active,
+  onClick,
+  icon,
+  hasMenu,
+}: {
+  label: string;
+  active?: boolean;
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  icon: React.ReactNode;
+  hasMenu?: boolean;
+}) {
+  const { mode } = useColorMode();
+  return (
+    <Button
+      onClick={onClick}
+      startIcon={icon}
+      endIcon={hasMenu ? <ExpandIcon sx={{ fontSize: 16 }} /> : undefined}
+      sx={{
+        borderRadius: 2,
+        textTransform: 'none',
+        fontWeight: active ? 700 : 600,
+        color: active ? '#4f46e5' : mode === 'dark' ? '#cbd5e1' : '#475569',
+        bgcolor: active ? (mode === 'dark' ? 'rgba(79,70,229,0.15)' : '#eef2ff') : 'transparent',
+        px: 1.75,
+        py: 0.7,
+        '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
+      }}
+    >
+      {label}
+    </Button>
+  );
+}
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -68,38 +103,6 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
-
-  const NavButton = ({
-    label,
-    active,
-    onClick,
-    icon,
-    hasMenu,
-  }: {
-    label: string;
-    active?: boolean;
-    onClick: (e: React.MouseEvent<HTMLElement>) => void;
-    icon: React.ReactNode;
-    hasMenu?: boolean;
-  }) => (
-    <Button
-      onClick={onClick}
-      startIcon={icon}
-      endIcon={hasMenu ? <ExpandIcon sx={{ fontSize: 16 }} /> : undefined}
-      sx={{
-        borderRadius: 2,
-        textTransform: 'none',
-        fontWeight: active ? 700 : 600,
-        color: active ? '#4f46e5' : mode === 'dark' ? '#cbd5e1' : '#475569',
-        bgcolor: active ? (mode === 'dark' ? 'rgba(79,70,229,0.15)' : '#eef2ff') : 'transparent',
-        px: 1.75,
-        py: 0.7,
-        '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
-      }}
-    >
-      {label}
-    </Button>
-  );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

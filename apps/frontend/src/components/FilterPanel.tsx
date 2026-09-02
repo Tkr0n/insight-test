@@ -40,7 +40,7 @@ function FilterContent({
   onClear,
   availableTags,
 }: FilterPanelProps) {
-  const { data: users } = useUsers();
+  const { data: users, isLoading: usersLoading } = useUsers();
   const userOptions = users ?? [];
   const selectedUser =
     filters.assigneeId != null
@@ -161,8 +161,11 @@ function FilterContent({
               onChange({ ...filters, assigneeId: undefined });
             }
           }}
+          loading={usersLoading}
+          loadingText="Loading users..."
+          noOptionsText={usersLoading ? 'Loading users...' : 'No users available'}
           renderInput={(params) => (
-            <TextField {...params} label="Assignee" placeholder="Select assignee" size="small" />
+            <TextField {...params} label="Assignee" placeholder="Search by name or email" size="small" />
           )}
           sx={{ minWidth: 220, flex: 1 }}
         />
