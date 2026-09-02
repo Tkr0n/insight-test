@@ -27,6 +27,7 @@ import { ShareModal } from '../components/ShareModal';
 import { TaskForm, type TaskFormValues } from '../components/TaskForm';
 import { ErrorAlert } from '../components/ErrorAlert';
 import type { Task, TaskStatus, TaskFilters } from '../types/task';
+import { isDoneTransition } from '../utils/statusTransition';
 
 interface SnackbarState {
   open: boolean;
@@ -199,6 +200,23 @@ export function DashboardPage() {
     );
   };
 
+  const runStatusChange = (taskId: string, status: TaskStatus) => {
+    setTransitioningId(taskId);
+    const onSuccess = () => {
+      setTransitioningId(null);
+      setSnackbar({ open: true, message: 'Task status updated', severity: 'success' });
+    };
+    const onError = (err: unknown) => {
+      setTransitioningId(null);
+      setSnackbar({ open: true, message: getErrorMessage(err), severity: 'error' });
+    };
+    if (isDoneTransition(status)) {
+      markAsDone.mutate(taskId, { onSuccess, onError });
+    } else {
+      updateTask.mutate({ id: taskId, status }, { onSuccess, onError });
+    }
+  };
+
   const handleMove = (taskId: string, newStatus: TaskStatus) => {
     const task = tasks?.find((t) => t.id === taskId);
     if (!task) return;
@@ -209,20 +227,7 @@ export function DashboardPage() {
         return;
       }
     }
-    setTransitioningId(taskId);
-    updateTask.mutate(
-      { id: taskId, status: newStatus },
-      {
-        onSuccess: () => {
-          setTransitioningId(null);
-          setSnackbar({ open: true, message: 'Task status updated', severity: 'success' });
-        },
-        onError: (err) => {
-          setTransitioningId(null);
-          setSnackbar({ open: true, message: getErrorMessage(err), severity: 'error' });
-        },
-      },
-    );
+    runStatusChange(taskId, newStatus);
   };
 
   const handleShare = (task: Task) => {
@@ -231,35 +236,7 @@ export function DashboardPage() {
   };
 
   const handleTransition = (taskId: string, targetStatus: TaskStatus) => {
-    setTransitioningId(taskId);
-
-    if (targetStatus === 'ARCHIVED') {
-      updateTask.mutate(
-        { id: taskId, status: targetStatus },
-        {
-          onSuccess: () => {
-            setTransitioningId(null);
-            setSnackbar({ open: true, message: 'Task status updated', severity: 'success' });
-          },
-          onError: (err) => {
-            setTransitioningId(null);
-            setSnackbar({ open: true, message: getErrorMessage(err), severity: 'error' });
-          },
-        },
-      );
-      return;
-    }
-
-    markAsDone.mutate(taskId, {
-      onSuccess: () => {
-        setTransitioningId(null);
-        setSnackbar({ open: true, message: 'Task status updated', severity: 'success' });
-      },
-      onError: (err) => {
-        setTransitioningId(null);
-        setSnackbar({ open: true, message: getErrorMessage(err), severity: 'error' });
-      },
-    });
+    runStatusChange(taskId, targetStatus);
   };
 
   const handleDelete = (taskId: string) => {
