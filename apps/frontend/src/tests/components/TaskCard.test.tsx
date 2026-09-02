@@ -20,6 +20,7 @@ describe('TaskCard', () => {
     onTransition: vi.fn(),
     onDelete: vi.fn(),
     onEdit: vi.fn(),
+    currentUserId: 'user-1',
   };
 
   beforeEach(() => {

@@ -80,11 +80,15 @@ export function TaskCard({
   isMobile = false,
   onMove,
 }: TaskCardProps) {
-  void currentUserId;
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const transitionAction = getTransitionAction(task.status);
   const deadlineColor = getDeadlineColor(task.dueDate);
+  // Only the owner or the assignee can modify the task; a task shared with the
+  // user (and no other role) is view-only.
+  const canManage =
+    currentUserId != null &&
+    (task.ownerId === currentUserId || task.assigneeId === currentUserId);
   const tags = task.tags ?? [];
   const visibleTags = tags.slice(0, 3);
   const remainingCount = tags.length - 3;
@@ -313,7 +317,7 @@ export function TaskCard({
           borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)'}`,
         }}
       >
-        {isMobile && (
+        {canManage && isMobile && (
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
             <Tooltip title={prevStatus ? `Move to ${prevStatus}` : 'No previous state'}>
               <span>
@@ -355,73 +359,82 @@ export function TaskCard({
           </Stack>
         )}
 
-        <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center', ml: isMobile ? 0 : 'auto' }}>
-          {onShare && (
-            <Tooltip title="Share">
-              <IconButton
-                size="small"
-                onClick={() => onShare(task)}
-                aria-label="Share"
-                sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
-              >
-                <ShareIcon sx={{ fontSize: 15 }} />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Edit">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onEdit(task)}
-                disabled={task.status === 'ARCHIVED' || isTransitioning}
-                sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
-              >
-                <EditIcon sx={{ fontSize: 15 }} />
-              </IconButton>
-            </span>
-          </Tooltip>
-          {!isMobile && transitionAction && (
-            <Tooltip title={transitionAction.label}>
+        {canManage ? (
+          <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center', ml: isMobile ? 0 : 'auto' }}>
+            {onShare && (
+              <Tooltip title="Share">
+                <IconButton
+                  size="small"
+                  onClick={() => onShare(task)}
+                  aria-label="Share"
+                  sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
+                >
+                  <ShareIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Edit">
               <span>
                 <IconButton
                   size="small"
-                  onClick={() => {
-                    const nextStat = VALID_TRANSITIONS[task.status]?.find((s) => s === nextStatus) ?? VALID_TRANSITIONS[task.status]?.[0];
-                    if (nextStat) onTransition(task.id, nextStat);
-                  }}
-                  disabled={isTransitioning}
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    bgcolor: '#4f46e5',
-                    color: '#fff',
-                    '&:hover': { bgcolor: '#4338ca' },
-                    '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' },
-                  }}
+                  onClick={() => onEdit(task)}
+                  disabled={task.status === 'ARCHIVED' || isTransitioning}
+                  sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
                 >
-                  {isTransitioning ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : transitionAction.icon}
+                  <EditIcon sx={{ fontSize: 15 }} />
                 </IconButton>
               </span>
             </Tooltip>
-          )}
-          <Tooltip title="Delete">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onDelete(task.id)}
-                disabled={isDeleting}
-                sx={{
-                  width: 28,
-                  height: 28,
-                  color: isDark ? '#64748b' : '#94a3b8',
-                  '&:hover': { color: '#ef4444', bgcolor: isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2' },
-                }}
-              >
-                {isDeleting ? <CircularProgress size={14} /> : <DeleteIcon sx={{ fontSize: 15 }} />}
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Stack>
+            {!isMobile && transitionAction && (
+              <Tooltip title={transitionAction.label}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      const nextStat = VALID_TRANSITIONS[task.status]?.find((s) => s === nextStatus) ?? VALID_TRANSITIONS[task.status]?.[0];
+                      if (nextStat) onTransition(task.id, nextStat);
+                    }}
+                    disabled={isTransitioning}
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      bgcolor: '#4f46e5',
+                      color: '#fff',
+                      '&:hover': { bgcolor: '#4338ca' },
+                      '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' },
+                    }}
+                  >
+                    {isTransitioning ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : transitionAction.icon}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+            <Tooltip title="Delete">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(task.id)}
+                  disabled={isDeleting}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    color: isDark ? '#64748b' : '#94a3b8',
+                    '&:hover': { color: '#ef4444', bgcolor: isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2' },
+                  }}
+                >
+                  {isDeleting ? <CircularProgress size={14} /> : <DeleteIcon sx={{ fontSize: 15 }} />}
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+        ) : (
+          <Typography
+            variant="caption"
+            sx={{ fontSize: '0.7rem', color: isDark ? '#64748b' : '#94a3b8', ml: 'auto' }}
+          >
+            Read-only
+          </Typography>
+        )}
       </Box>
     </Card>
   );
