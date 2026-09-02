@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
 import { authenticate } from '../middlewares/auth.js';
+import { asyncHandler } from '../middlewares/async-handler.js';
 
 const router = Router();
 
-router.get('/', authenticate, async (req: Request, res: Response) => {
+router.get('/', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const callerId = req.user!.sub;
   const callerEmail = req.user!.email;
 
@@ -52,6 +53,6 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
   }
 
   res.json({ data: users });
-});
+}));
 
 export { router as userRoutes };

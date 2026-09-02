@@ -299,6 +299,19 @@ jobs:
           echo "Backend deployed to ECS"
         working-directory: infra
 
+      - name: Run Prisma migrations (AWS RDS)
+        run: |
+          CLUSTER=$(tofu output -raw ecs_cluster_name)
+          SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query "Vpcs[0].VpcId" --output text) --query "Subnets[0:2].SubnetId" --output text | tr '\t' ',' | sed 's/,/,/g')
+          SG=$(aws ec2 describe-security-groups --filters Name=group-name,Values=insight-test-tkr0n-ecs-sg --query "SecurityGroups[0].GroupId" --output text)
+          echo "Running prisma migrate deploy on $CLUSTER"
+          TASK_ARN=$(aws ecs run-task --cluster $CLUSTER --task-definition insight-test-tkr0n-backend --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[$SUBNETS],securityGroups=[$SG],assignPublicIp=ENABLED}" --overrides '{"containerOverrides":[{"name":"backend","command":["sh","-c","npx prisma migrate deploy"]}]}' --query "tasks[0].taskArn" --output text)
+          echo "Migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster $CLUSTER --tasks $TASK_ARN || true
+          LOG_STREAM=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN --query "tasks[0].containers[0].logStreamName" --output text 2>/dev/null || echo "")
+          if [ "$LOG_STREAM" != "None" ] && [ -n "$LOG_STREAM" ]; then aws logs get-log-events --log-group-name "/ecs/insight-test-tkr0n-backend" --log-stream-name "$LOG_STREAM" --query "events[].message" --output text || true; fi
+        working-directory: infra
+
       - name: Wait for services to stabilize
         run: |
           CLUSTER=$(tofu output -raw ecs_cluster_name)

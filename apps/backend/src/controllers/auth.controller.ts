@@ -4,8 +4,8 @@ import { env } from '../config/env.js';
 import { AppError } from '../middlewares/error-handler.js';
 import { validate } from '../middlewares/validate.js';
 import { loginSchema } from '../validations/auth.js';
-import { generateCsrfToken, csrfProtection } from '../middlewares/csrf.js';
-import { csrfIssue } from '../middlewares/csrf.js';
+import { generateCsrfToken, csrfIssue } from '../middlewares/csrf.js';
+import { asyncHandler } from '../middlewares/async-handler.js';
 
 const router = Router();
 
@@ -31,7 +31,7 @@ function getCsrfCookieOptions() {
   };
 }
 
-router.post('/login', validate(loginSchema, 'body'), async (req: Request, res: Response) => {
+router.post('/login', validate(loginSchema, 'body'), asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as { email: string; password: string };
 
   if (!env.COGNITO_USER_POOL_ID || !env.COGNITO_CLIENT_ID) {
@@ -75,9 +75,9 @@ router.post('/login', validate(loginSchema, 'body'), async (req: Request, res: R
     const msg = map[typed.name ?? ''] ?? typed.message ?? 'Invalid credentials';
     throw new AppError(401, msg);
   }
-});
+}));
 
-router.post('/logout', csrfProtection, (_req: Request, res: Response) => {
+router.post('/logout', (_req: Request, res: Response) => {
   const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
   const opts = { path: '/', secure: isSecure, sameSite: 'strict' as const };
   res.clearCookie('__Host-id_token', { ...opts, httpOnly: true });

@@ -82,7 +82,8 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
   }
 
   if (!token) {
-    throw new AppError(401, 'Missing or invalid authorization header');
+    next(new AppError(401, 'Missing or invalid authorization header'));
+    return;
   }
 
   try {
@@ -90,6 +91,6 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     req.user = { sub: payload.sub!, email: payload.email };
     next();
   } catch {
-    throw new AppError(401, 'Invalid or expired token');
+    next(new AppError(401, 'Invalid or expired token'));
   }
 }

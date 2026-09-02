@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { Logout as LogoutIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../api/axios-client';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,7 +20,6 @@ export function Layout({ children }: LayoutProps) {
 
   const handleLogout = async () => {
     try {
-      const { apiClient } = await import('../api/axios-client');
       await apiClient.post('/auth/logout');
     } catch {
       // proceed to logout locally even if backend fails

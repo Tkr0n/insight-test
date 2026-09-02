@@ -7,6 +7,7 @@ import { authenticate } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { idempotency, withIdempotencyCheck } from '../middlewares/idempotency.js';
 import { AppError } from '../middlewares/error-handler.js';
+import { asyncHandler } from '../middlewares/async-handler.js';
 
 const router = Router();
 const taskRepo = new TaskRepository(prisma);
@@ -14,7 +15,7 @@ const markAsDone = new MarkAsDoneUseCase(taskRepo);
 
 router.use(authenticate);
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const q = req.query as Record<string, string | string[] | undefined>;
 
   const filter: TaskFilter = {};
@@ -78,54 +79,54 @@ router.get('/', async (req: Request, res: Response) => {
 
   const tasks = await taskRepo.findByOwner(req.user!.sub, filter);
   res.json({ data: tasks });
-});
+}));
 
-router.get('/:id', validate(taskIdSchema, 'params'), async (req: Request, res: Response) => {
+router.get('/:id', validate(taskIdSchema, 'params'), asyncHandler(async (req: Request, res: Response) => {
   const taskId = req.params.id as string;
   const task = await taskRepo.findAccessibleTask(taskId, req.user!.sub);
   if (!task) {
     throw new AppError(404, 'Task not found');
   }
   res.json({ data: task });
-});
+}));
 
-router.post('/', validate(createTaskSchema, 'body'), async (req: Request, res: Response) => {
+router.post('/', validate(createTaskSchema, 'body'), asyncHandler(async (req: Request, res: Response) => {
   const task = await taskRepo.create({
     ...req.body,
     ownerId: req.user!.sub,
   });
   res.status(201).json({ data: task });
-});
+}));
 
 router.put(
   '/:id',
   validate(taskIdSchema, 'params'),
   validate(updateTaskSchema, 'body'),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const taskId = req.params.id as string;
     const task = await taskRepo.updateWithPermission(taskId, req.user!.sub, req.body);
     res.json({ data: task });
-  }
+  })
 );
 
-router.delete('/:id', validate(taskIdSchema, 'params'), async (req: Request, res: Response) => {
+router.delete('/:id', validate(taskIdSchema, 'params'), asyncHandler(async (req: Request, res: Response) => {
   const taskId = req.params.id as string;
   await taskRepo.delete(taskId, req.user!.sub);
   res.status(204).send();
-});
+}));
 
 router.patch(
   '/:id/done',
   validate(taskIdSchema, 'params'),
   idempotency,
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const taskId = req.params.id as string;
     await withIdempotencyCheck(req, res, async () => {
       await markAsDone.execute({ taskId, ownerId: req.user!.sub });
     });
     const task = await taskRepo.findAccessibleTask(taskId, req.user!.sub);
     res.json({ data: task });
-  }
+  })
 );
 
 export { router as taskRoutes };
