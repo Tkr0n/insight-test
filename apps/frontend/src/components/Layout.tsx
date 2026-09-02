@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AppBar,
   Toolbar,
@@ -89,6 +90,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const theme = useTheme();
   const isMobileNav = useMediaQuery(theme.breakpoints.down('md'));
   const { mode, toggleMode } = useColorMode();
@@ -106,6 +108,7 @@ export function Layout({ children }: LayoutProps) {
       // proceed to logout locally even if backend fails
     }
     localStorage.removeItem('id_token');
+    queryClient.clear();
     navigate('/login', { replace: true });
   };
 

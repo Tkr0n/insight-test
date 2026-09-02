@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Card,
@@ -17,6 +18,7 @@ type Mode = 'login' | 'register';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,6 +52,8 @@ export function LoginPage() {
         return;
       }
       localStorage.removeItem('id_token');
+      // Drop any cached data from a previous session/user
+      queryClient.clear();
       navigate('/tasks', { replace: true });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } }; message?: string };
@@ -71,6 +75,7 @@ export function LoginPage() {
     try {
       await changePassword(email, session as string, newPassword);
       localStorage.removeItem('id_token');
+      queryClient.clear();
       navigate('/tasks', { replace: true });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } }; message?: string };
