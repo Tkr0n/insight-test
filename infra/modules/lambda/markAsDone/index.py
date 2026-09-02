@@ -39,12 +39,19 @@ def lambda_handler(event, context):
         cur = conn.cursor()
         cur.execute(
             """
+            WITH locked_task AS (
+                SELECT id, title, status
+                FROM tasks
+                WHERE id = %s AND owner_id = %s
+                FOR UPDATE
+            )
             UPDATE tasks
             SET status = 'DONE', updated_at = %s
-            WHERE id = %s AND owner_id = %s
-            RETURNING id, title, status, updated_at
+            FROM locked_task
+            WHERE tasks.id = locked_task.id
+            RETURNING tasks.id, tasks.title, tasks.status, tasks.updated_at
             """,
-            (datetime.utcnow().isoformat(), task_id, user_id),
+            (task_id, user_id, datetime.utcnow().isoformat()),
         )
         row = cur.fetchone()
         conn.commit()
