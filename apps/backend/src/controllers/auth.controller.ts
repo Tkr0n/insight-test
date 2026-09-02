@@ -9,11 +9,15 @@ import { asyncHandler } from '../middlewares/async-handler.js';
 
 const router = Router();
 
+function isSecureCookies(): boolean {
+  if (env.COOKIE_SECURE !== undefined) return String(env.COOKIE_SECURE) === 'true';
+  return env.NODE_ENV === 'production';
+}
+
 function getCookieOptions() {
-  const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
   return {
     httpOnly: true,
-    secure: isSecure,
+    secure: isSecureCookies(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 1000,
@@ -21,10 +25,9 @@ function getCookieOptions() {
 }
 
 function getCsrfCookieOptions() {
-  const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
   return {
     httpOnly: false,
-    secure: isSecure,
+    secure: isSecureCookies(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 1000,
@@ -78,8 +81,7 @@ router.post('/login', validate(loginSchema, 'body'), asyncHandler(async (req: Re
 }));
 
 router.post('/logout', (_req: Request, res: Response) => {
-  const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
-  const opts = { path: '/', secure: isSecure, sameSite: 'lax' as const };
+  const opts = { path: '/', secure: isSecureCookies(), sameSite: 'lax' as const };
   res.clearCookie('id_token', { ...opts, httpOnly: true });
   res.clearCookie('csrf_token', { ...opts, httpOnly: false });
   res.status(204).send();

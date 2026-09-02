@@ -34,7 +34,9 @@ function verifyCsrfToken(token: string): boolean {
 }
 
 function getCookieOptions() {
-  const isSecure = env.COOKIE_SECURE || env.NODE_ENV === 'production';
+  const isSecure = env.COOKIE_SECURE !== undefined
+    ? String(env.COOKIE_SECURE) === 'true'
+    : env.NODE_ENV === 'production';
   return {
     httpOnly: false,
     secure: isSecure,

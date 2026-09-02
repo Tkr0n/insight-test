@@ -103,6 +103,6 @@ module "ecs" {
     PORT                   = "3000"
     CORS_ORIGIN            = var.cors_origin != "" ? var.cors_origin : "https://${var.project_name}.example.com"
     CSRF_SECRET            = var.csrf_secret
-    COOKIE_SECURE          = "true"
+    COOKIE_SECURE          = "false"
   }
 }
