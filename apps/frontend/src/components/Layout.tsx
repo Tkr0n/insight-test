@@ -91,10 +91,8 @@ export function Layout({ children }: LayoutProps) {
   const isMobileNav = useMediaQuery(theme.breakpoints.down('md'));
   const { mode, toggleMode } = useColorMode();
 
-  const [usersAnchor, setUsersAnchor] = useState<null | HTMLElement>(null);
   const [docsAnchor, setDocsAnchor] = useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerUsersOpen, setDrawerUsersOpen] = useState(false);
   const [drawerDocsOpen, setDrawerDocsOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -108,6 +106,11 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
+
+  const openDocsDiagram = (diagram: string) => {
+    setDocsAnchor(null);
+    window.open(`/docs?diagram=${diagram}`, '_blank');
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -165,9 +168,7 @@ export function Layout({ children }: LayoutProps) {
                 label="Users"
                 icon={<UsersIcon sx={{ fontSize: 18 }} />}
                 active={isActive('/users')}
-                menuOpen={Boolean(usersAnchor)}
-                hasMenu
-                onClick={(e) => setUsersAnchor(e.currentTarget)}
+                onClick={() => navigate('/users')}
               />
               <NavButton
                 label="Documentation"
@@ -225,18 +226,6 @@ export function Layout({ children }: LayoutProps) {
       </AppBar>
 
       <Menu
-        anchorEl={usersAnchor}
-        open={Boolean(usersAnchor)}
-        onClose={() => setUsersAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-        slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 200, mt: 1 } } }}
-      >
-        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users'); }}>List users</MenuItem>
-        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users?action=create'); }}>Create user</MenuItem>
-      </Menu>
-
-      <Menu
         anchorEl={docsAnchor}
         open={Boolean(docsAnchor)}
         onClose={() => setDocsAnchor(null)}
@@ -288,37 +277,37 @@ export function Layout({ children }: LayoutProps) {
         <Typography variant="caption" sx={{ px: 2, py: 0.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}>
           HTML DIAGRAMS
         </Typography>
-        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=system.architecture'); }}>
+        <MenuItem onClick={() => openDocsDiagram('system.architecture')}>
           <ListItemIcon>
             <ArchIcon fontSize="small" />
           </ListItemIcon>
           System Architecture
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=auth-flow'); }}>
+        <MenuItem onClick={() => openDocsDiagram('auth-flow')}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
           </ListItemIcon>
           Auth Flow
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=request-flow'); }}>
+        <MenuItem onClick={() => openDocsDiagram('request-flow')}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
           </ListItemIcon>
           Request Flow
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=infrastructure'); }}>
+        <MenuItem onClick={() => openDocsDiagram('infrastructure')}>
           <ListItemIcon>
             <InfraIcon fontSize="small" />
           </ListItemIcon>
           Infrastructure
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=task-lifecycle'); }}>
+        <MenuItem onClick={() => openDocsDiagram('task-lifecycle')}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
           </ListItemIcon>
           Task Lifecycle
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=kanban-flow'); }}>
+        <MenuItem onClick={() => openDocsDiagram('kanban-flow')}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
           </ListItemIcon>
@@ -344,23 +333,12 @@ export function Layout({ children }: LayoutProps) {
             <ListItemText primary="Tasks" />
           </ListItemButton>
 
-          <ListItemButton onClick={() => setDrawerUsersOpen((v) => !v)}>
+          <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/users'); }} selected={isActive('/users')}>
             <ListItemIcon>
               <UsersIcon />
             </ListItemIcon>
             <ListItemText primary="Users" />
-            <ExpandIcon sx={{ transform: drawerUsersOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
           </ListItemButton>
-          <Collapse in={drawerUsersOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/users'); }}>
-                <ListItemText primary="List users" />
-              </ListItemButton>
-              <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/users?action=create'); }}>
-                <ListItemText primary="Create user" />
-              </ListItemButton>
-            </List>
-          </Collapse>
 
           <ListItemButton onClick={() => setDrawerDocsOpen((v) => !v)}>
             <ListItemIcon>
@@ -393,7 +371,7 @@ export function Layout({ children }: LayoutProps) {
                 ['Task Lifecycle', 'task-lifecycle'],
                 ['Kanban Flow', 'kanban-flow'],
               ].map(([label, diagram]) => (
-                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate(`/docs?diagram=${diagram}`); }}>
+                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); window.open(`/docs?diagram=${diagram}`, '_blank'); }}>
                   <ListItemText primary={label} />
                 </ListItemButton>
               ))}
