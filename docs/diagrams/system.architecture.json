@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Task Management System Architecture",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "request-path", "label": "Primary request path", "focus": ["browser", "react", "nginx", "express", "pgbouncer", "postgres"], "note": "Follow a typical CRUD request from browser to database." },
+      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["react", "cognito", "express", "redis"], "note": "JWT authentication and Redis-based idempotency checks." },
+      { "id": "async-done", "label": "markAsDone Lambda", "focus": ["express", "lambda", "postgres"], "note": "The critical flow externalized to AWS Lambda with pessimistic locking." }
+    ]
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "User Agent", "pos": [40, 220], "size": [120, 60] },
+    { "id": "react", "type": "frontend", "label": "React App", "sublabel": "Vite + MUI + React Query", "pos": [220, 220], "size": [160, 60] },
+    { "id": "cognito", "type": "security", "label": "AWS Cognito", "sublabel": "User Pool + JWT", "pos": [220, 60], "size": [150, 60] },
+    { "id": "nginx", "type": "cloud", "label": "Nginx", "sublabel": "Reverse Proxy", "pos": [460, 220], "size": [130, 60] },
+    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "Node.js + TS", "pos": [660, 220], "size": [140, 60] },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "Idempotency", "pos": [460, 60], "size": [130, 60] },
+    { "id": "pgbouncer", "type": "cloud", "label": "PgBouncer", "sublabel": "Pool :6432", "pos": [880, 160], "size": [130, 60] },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "Tasks :5432", "pos": [880, 310], "size": [130, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [660, 400], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Docker Compose (Local)", "wraps": ["nginx", "express", "redis", "pgbouncer", "postgres"] },
+    { "kind": "security-group", "label": "AWS Cloud", "wraps": ["cognito", "lambda"] }
+  ],
+  "connections": [
+    { "id": "browser-react", "from": "browser", "to": "react", "label": "HTTP :5173", "variant": "emphasis" },
+    { "id": "react-cognito", "from": "react", "to": "cognito", "label": "login + JWT", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "react-nginx", "from": "react", "to": "nginx", "label": "API calls", "variant": "emphasis" },
+    { "id": "nginx-express", "from": "nginx", "to": "express", "label": "proxy :3000", "labelAt": [560, 185] },
+    { "id": "express-redis", "from": "express", "to": "redis", "label": "SETNX / GET", "variant": "security", "fromSide": "left", "toSide": "right" },
+    { "id": "express-pgb", "from": "express", "to": "pgbouncer", "label": "SQL :6432" },
+    { "id": "pgb-pg", "from": "pgbouncer", "to": "postgres", "label": "pool :5432", "labelAt": [945, 260] },
+    { "id": "express-lambda", "from": "express", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "labelAt": [730, 310] },
+    { "id": "lambda-pg", "from": "lambda", "to": "postgres", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "right", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Frontend", "items": ["React + Vite + TypeScript", "Material UI components", "React Query for data fetching"] },
+    { "dot": "emerald", "title": "Backend", "items": ["Express Clean Architecture", "Prisma ORM for PostgreSQL", "Zod validation middleware"] },
+    { "dot": "rose", "title": "Security", "items": ["AWS Cognito JWT authentication", "Ownership scoping (owner_id)", "Redis SETNX idempotency guard"] },
+    { "dot": "violet", "title": "Concurrency", "items": ["Pessimistic locking (FOR UPDATE)", "PgBouncer connection pooling", "Lambda externalized for markAsDone"] }
+  ]
+}
