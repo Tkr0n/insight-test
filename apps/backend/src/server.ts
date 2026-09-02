@@ -8,6 +8,7 @@ import { taskRoutes } from './controllers/task.controller.js';
 import { shareRoutes } from './controllers/share.controller.js';
 import { userRoutes } from './controllers/user.controller.js';
 import { authRoutes } from './controllers/auth.controller.js';
+import { docsRoutes } from './controllers/docs.controller.js';
 import { csrfProtection } from './middlewares/csrf.js';
 import { resolveCognitoConfig } from './config/cognito.js';
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/docs', docsRoutes);
 app.use('/api/tasks', csrfProtection, taskRoutes);
 app.use('/api/tasks/:id/share', csrfProtection, shareRoutes);
 app.use('/api/users', userRoutes);

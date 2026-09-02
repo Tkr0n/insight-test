@@ -150,11 +150,23 @@ export function Layout({ children }: LayoutProps) {
                   bgcolor: isActive('/tasks') ? (mode === 'dark' ? 'rgba(79,70,229,0.15)' : '#eef2ff') : 'transparent',
                 }}
               >
-                Tareas
+                Tasks
               </Button>
 
-              <NavButton label="Usuarios" icon={<UsersIcon sx={{ fontSize: 18 }} />} active={isActive('/users')} hasMenu onClick={(e) => setUsersAnchor(e.currentTarget)} />
-              <NavButton label="Documentación" icon={<DocsIcon sx={{ fontSize: 18 }} />} active={isActive('/docs')} hasMenu onClick={(e) => setDocsAnchor(e.currentTarget)} />
+              <NavButton
+                label="Users"
+                icon={<UsersIcon sx={{ fontSize: 18 }} />}
+                active={isActive('/users') || Boolean(usersAnchor)}
+                hasMenu
+                onClick={(e) => setUsersAnchor(e.currentTarget)}
+              />
+              <NavButton
+                label="Documentation"
+                icon={<DocsIcon sx={{ fontSize: 18 }} />}
+                active={isActive('/docs') || Boolean(docsAnchor)}
+                hasMenu
+                onClick={(e) => setDocsAnchor(e.currentTarget)}
+              />
             </Box>
           )}
 
@@ -202,95 +214,112 @@ export function Layout({ children }: LayoutProps) {
         </Toolbar>
       </AppBar>
 
-      <Menu anchorEl={usersAnchor} open={Boolean(usersAnchor)} onClose={() => setUsersAnchor(null)} slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 220, mt: 1 } } }}>
-        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users'); }}>Listar usuarios</MenuItem>
-        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users?action=create'); }}>Crear usuario</MenuItem>
-        <Divider />
-        <MenuItem disabled sx={{ opacity: 0.6 }}>
-          Editar / Eliminar desde la tabla
-        </MenuItem>
+      <Menu
+        anchorEl={usersAnchor}
+        open={Boolean(usersAnchor)}
+        onClose={() => setUsersAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 200, mt: 1 } } }}
+      >
+        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users'); }}>List users</MenuItem>
+        <MenuItem onClick={() => { setUsersAnchor(null); navigate('/users?action=create'); }}>Create user</MenuItem>
       </Menu>
 
       <Menu
         anchorEl={docsAnchor}
         open={Boolean(docsAnchor)}
         onClose={() => setDocsAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 280, mt: 1 } } }}
       >
         <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs'); }}>
           <ListItemIcon>
             <DocsIcon fontSize="small" />
           </ListItemIcon>
-          Ver toda la documentación
+          View all documentation
         </MenuItem>
         <Divider />
         <Typography variant="caption" sx={{ px: 2, py: 0.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}>
           MARKDOWN
         </Typography>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/architecture-and-flows.md', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?doc=architecture-and-flows'); }}>
           <ListItemIcon>
             <ArchIcon fontSize="small" />
           </ListItemIcon>
-          Arquitectura y Flujos
+          Architecture & Flows
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/business-rules.md', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?doc=business-rules'); }}>
           <ListItemIcon>
             <RulesIcon fontSize="small" />
           </ListItemIcon>
-          Reglas de Negocio
+          Business Rules
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/database-schema.md', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?doc=database-schema'); }}>
           <ListItemIcon>
             <SchemaIcon fontSize="small" />
           </ListItemIcon>
-          Esquema de BD
+          Database Schema
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/infrastructure.md', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?doc=infrastructure'); }}>
           <ListItemIcon>
             <InfraIcon fontSize="small" />
           </ListItemIcon>
-          Infraestructura
+          Infrastructure
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/testing-strategy.md', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?doc=testing-strategy'); }}>
           <ListItemIcon>
             <TestIcon fontSize="small" />
           </ListItemIcon>
-          Testing
+          Testing Strategy
         </MenuItem>
         <Divider />
         <Typography variant="caption" sx={{ px: 2, py: 0.5, color: 'text.secondary', fontWeight: 700, letterSpacing: '0.06em' }}>
-          DIAGRAMAS HTML
+          HTML DIAGRAMS
         </Typography>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/system.architecture.html', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=system.architecture'); }}>
           <ListItemIcon>
             <ArchIcon fontSize="small" />
           </ListItemIcon>
           System Architecture
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/auth-flow.sequence.html', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=auth-flow'); }}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
           </ListItemIcon>
           Auth Flow
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/request-flow.sequence.html', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=request-flow'); }}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
           </ListItemIcon>
           Request Flow
         </MenuItem>
-        <MenuItem onClick={() => { setDocsAnchor(null); window.open('/docs/diagrams/infrastructure.architecture.html', '_blank'); }}>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=infrastructure'); }}>
           <ListItemIcon>
             <InfraIcon fontSize="small" />
           </ListItemIcon>
           Infrastructure
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=task-lifecycle'); }}>
+          <ListItemIcon>
+            <FlowIcon fontSize="small" />
+          </ListItemIcon>
+          Task Lifecycle
+        </MenuItem>
+        <MenuItem onClick={() => { setDocsAnchor(null); navigate('/docs?diagram=kanban-flow'); }}>
+          <ListItemIcon>
+            <FlowIcon fontSize="small" />
+          </ListItemIcon>
+          Kanban Flow
         </MenuItem>
       </Menu>
 
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)} slotProps={{ paper: { sx: { width: 300 } } }}>
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Navegación
+            Navigation
           </Typography>
           <IconButton size="small" onClick={toggleMode}>
             {mode === 'dark' ? <LightIcon /> : <DarkIcon />}
@@ -302,26 +331,23 @@ export function Layout({ children }: LayoutProps) {
             <ListItemIcon>
               <LogoIcon />
             </ListItemIcon>
-            <ListItemText primary="Tareas" />
+            <ListItemText primary="Tasks" />
           </ListItemButton>
 
           <ListItemButton onClick={() => setDrawerUsersOpen((v) => !v)}>
             <ListItemIcon>
               <UsersIcon />
             </ListItemIcon>
-            <ListItemText primary="Usuarios" />
+            <ListItemText primary="Users" />
             <ExpandIcon sx={{ transform: drawerUsersOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
           </ListItemButton>
           <Collapse in={drawerUsersOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/users'); }}>
-                <ListItemText primary="Listar usuarios" />
+                <ListItemText primary="List users" />
               </ListItemButton>
               <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/users?action=create'); }}>
-                <ListItemText primary="Crear usuario" />
-              </ListItemButton>
-              <ListItemButton sx={{ pl: 4 }} disabled>
-                <ListItemText primary="Editar / Eliminar — desde tabla" />
+                <ListItemText primary="Create user" />
               </ListItemButton>
             </List>
           </Collapse>
@@ -330,32 +356,34 @@ export function Layout({ children }: LayoutProps) {
             <ListItemIcon>
               <DocsIcon />
             </ListItemIcon>
-            <ListItemText primary="Documentación" />
+            <ListItemText primary="Documentation" />
             <ExpandIcon sx={{ transform: drawerDocsOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
           </ListItemButton>
           <Collapse in={drawerDocsOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate('/docs'); }}>
-                <ListItemText primary="Ver toda" />
+                <ListItemText primary="View all" />
               </ListItemButton>
               {[
-                ['Arquitectura', '/docs/architecture-and-flows.md'],
-                ['Reglas', '/docs/business-rules.md'],
-                ['BD Schema', '/docs/database-schema.md'],
-                ['Infra', '/docs/infrastructure.md'],
-                ['Testing', '/docs/testing-strategy.md'],
-              ].map(([label, href]) => (
-                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => window.open(href, '_blank')}>
+                ['Architecture', 'architecture-and-flows'],
+                ['Business Rules', 'business-rules'],
+                ['DB Schema', 'database-schema'],
+                ['Infrastructure', 'infrastructure'],
+                ['Testing', 'testing-strategy'],
+              ].map(([label, doc]) => (
+                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate(`/docs?doc=${doc}`); }}>
                   <ListItemText primary={label} />
                 </ListItemButton>
               ))}
               <Divider sx={{ my: 1 }} />
               {[
-                ['System Architecture', '/docs/diagrams/system.architecture.html'],
-                ['Auth Flow', '/docs/diagrams/auth-flow.sequence.html'],
-                ['Request Flow', '/docs/diagrams/request-flow.sequence.html'],
-              ].map(([label, href]) => (
-                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => window.open(href, '_blank')}>
+                ['System Architecture', 'system.architecture'],
+                ['Auth Flow', 'auth-flow'],
+                ['Request Flow', 'request-flow'],
+                ['Task Lifecycle', 'task-lifecycle'],
+                ['Kanban Flow', 'kanban-flow'],
+              ].map(([label, diagram]) => (
+                <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => { setDrawerOpen(false); navigate(`/docs?diagram=${diagram}`); }}>
                   <ListItemText primary={label} />
                 </ListItemButton>
               ))}

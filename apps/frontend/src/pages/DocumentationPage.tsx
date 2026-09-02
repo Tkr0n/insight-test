@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -11,6 +12,10 @@ import {
   CardActions,
   Grid,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from '@mui/material';
 import {
   Architecture as ArchIcon,
@@ -19,66 +24,118 @@ import {
   BugReport as TestIcon,
   Gavel as RulesIcon,
   Hub as FlowIcon,
-  OpenInNew as OpenIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import { apiClient } from '../api/axios-client';
 
 interface DocItem {
+  id: string;
   title: string;
   desc: string;
-  href: string;
+  file: string;
   icon: React.ReactNode;
   color: string;
-  tag: string;
 }
 
 const DOCS: DocItem[] = [
-  { title: 'Arquitectura y Flujos', desc: 'Capas, JWT+CSRF, Kanban drag & drop, filtros y share flow. Mermaid + narrativa.', href: '/docs/architecture-and-flows.md', icon: <ArchIcon />, color: '#4f46e5', tag: 'MD' },
-  { title: 'Reglas de Negocio', desc: 'State machine reversible, permisos owner/assignee/share y colores de deadline.', href: '/docs/business-rules.md', icon: <RulesIcon />, color: '#0891b2', tag: 'MD' },
-  { title: 'Esquema de BD', desc: 'Tablas users/tasks/task_shares, FKs y volumen persistente.', href: '/docs/database-schema.md', icon: <SchemaIcon />, color: '#7c3aed', tag: 'MD' },
-  { title: 'Infraestructura', desc: 'Docker Compose, PgBouncer, Redis y variables de entorno.', href: '/docs/infrastructure.md', icon: <InfraIcon />, color: '#ea580c', tag: 'MD' },
-  { title: 'Estrategia de Testing', desc: 'Jest + Supertest, Vitest y Cypress. Cobertura y matriz de permisos.', href: '/docs/testing-strategy.md', icon: <TestIcon />, color: '#059669', tag: 'MD' },
-  { title: 'Calidad de Código', desc: 'Early returns, complejidad ≤15, tipos estrictos y observabilidad.', href: '/docs/code-quality.md', icon: <FlowIcon />, color: '#db2777', tag: 'MD' },
+  { id: 'architecture-and-flows', title: 'Architecture & Flows', desc: 'Layers, JWT+CSRF, Kanban reversible, filters and share flow.', file: 'architecture-and-flows.md', icon: <ArchIcon />, color: '#4f46e5' },
+  { id: 'business-rules', title: 'Business Rules', desc: 'Reversible state machine, permissions and deadline colors.', file: 'business-rules.md', icon: <RulesIcon />, color: '#0891b2' },
+  { id: 'database-schema', title: 'Database Schema', desc: 'Tables users/tasks/task_shares and FKs.', file: 'database-schema.md', icon: <SchemaIcon />, color: '#7c3aed' },
+  { id: 'infrastructure', title: 'Infrastructure', desc: 'Docker Compose, PgBouncer, Redis and env vars.', file: 'infrastructure.md', icon: <InfraIcon />, color: '#ea580c' },
+  { id: 'testing-strategy', title: 'Testing Strategy', desc: 'Jest, Supertest, Vitest and Cypress coverage.', file: 'testing-strategy.md', icon: <TestIcon />, color: '#059669' },
+  { id: 'code-quality', title: 'Code Quality', desc: 'Early returns, complexity and strict types.', file: 'code-quality.md', icon: <FlowIcon />, color: '#db2777' },
 ];
 
 interface DiagramItem {
+  id: string;
   title: string;
   desc: string;
-  href: string;
+  file: string;
   color: string;
 }
 
 const DIAGRAMS: DiagramItem[] = [
-  { title: 'System Architecture', desc: 'Componentes, boundaries y conexiones (Frontend, API, DB, Cloud)', href: '/docs/diagrams/system.architecture.html', color: '#4f46e5' },
-  { title: 'Auth Flow (Sequence)', desc: 'Login httpOnly + CSRF double-submit — Browser → API → Cognito', href: '/docs/diagrams/auth-flow.sequence.html', color: '#0891b2' },
-  { title: 'Request Flow (Sequence)', desc: 'markAsDone: Idempotency SETNX + Lambda FOR UPDATE', href: '/docs/diagrams/request-flow.sequence.html', color: '#e11d48' },
-  { title: 'Infrastructure', desc: 'Docker, Postgres, PgBouncer, Redis — networking y volúmenes', href: '/docs/diagrams/infrastructure.architecture.html', color: '#ea580c' },
-  { title: 'Task Lifecycle (Nuevo)', desc: 'State machine reversible PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED', href: '/docs/diagrams/task-lifecycle.lifecycle.html', color: '#7c3aed' },
-  { title: 'Kanban Flow (Nuevo)', desc: 'Drag & drop desktop + accordion mobile + filtros accordión', href: '/docs/diagrams/kanban-flow.workflow.html', color: '#059669' },
+  { id: 'system.architecture', title: 'System Architecture', desc: 'Components, boundaries and connections', file: 'system.architecture.html', color: '#4f46e5' },
+  { id: 'auth-flow', title: 'Auth Flow (Sequence)', desc: 'httpOnly + CSRF double-submit', file: 'auth-flow.sequence.html', color: '#0891b2' },
+  { id: 'request-flow', title: 'Request Flow (Sequence)', desc: 'markAsDone: SETNX + Lambda FOR UPDATE', file: 'request-flow.sequence.html', color: '#e11d48' },
+  { id: 'infrastructure', title: 'Infrastructure', desc: 'Docker, Postgres, PgBouncer, Redis', file: 'infrastructure.architecture.html', color: '#ea580c' },
+  { id: 'task-lifecycle', title: 'Task Lifecycle', desc: 'Reversible PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED', file: 'task-lifecycle.lifecycle.html', color: '#7c3aed' },
+  { id: 'kanban-flow', title: 'Kanban Flow', desc: 'Desktop drag & drop + mobile accordion', file: 'kanban-flow.workflow.html', color: '#059669' },
 ];
 
 export function DocumentationPage() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [preview, setPreview] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [previewDiagram, setPreviewDiagram] = useState<string | null>(() => searchParams.get('diagram'));
+  const [mdOpen, setMdOpen] = useState<string | null>(null);
+  const [mdContent, setMdContent] = useState<string>('');
+  const [mdLoading, setMdLoading] = useState(false);
+
+  const docParam = searchParams.get('doc');
+  const diagramParam = searchParams.get('diagram');
+
+  useEffect(() => {
+    if (docParam) {
+      const item = DOCS.find((d) => d.id === docParam);
+      if (item) openMarkdown(item.file);
+    }
+  }, [docParam]);
+
+  useEffect(() => {
+    if (diagramParam) setPreviewDiagram(diagramParam);
+  }, [diagramParam]);
+
+  const openMarkdown = async (file: string) => {
+    setMdOpen(file);
+    setMdLoading(true);
+    try {
+      const res = await apiClient.get(`/docs/${encodeURIComponent(file)}`, { responseType: 'text' as never });
+      setMdContent(res.data as unknown as string);
+    } catch {
+      setMdContent('Failed to load document.');
+    } finally {
+      setMdLoading(false);
+    }
+  };
+
+  const handleDocOpen = (doc: DocItem) => {
+    setSearchParams({ doc: doc.id }, { replace: false });
+    openMarkdown(doc.file);
+  };
+
+  const handleDiagramPreview = (diagramId: string) => {
+    const newVal = previewDiagram === diagramId ? null : diagramId;
+    setPreviewDiagram(newVal);
+    const params = new URLSearchParams(searchParams);
+    if (newVal) params.set('diagram', newVal);
+    else params.delete('diagram');
+    setSearchParams(params, { replace: true });
+  };
+
+  const getDiagram = (id: string) => DIAGRAMS.find((d) => d.id === id);
 
   return (
     <Box sx={{ pb: 4 }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-          Documentación
+          Documentation
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Diagramas interactivos y documentos Markdown con el diseño y decisiones del sistema.
+          Interactive diagrams and Markdown documents with system design and decisions.
         </Typography>
       </Box>
 
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.secondary', mb: 1.5 }}>
-        Documentos Markdown
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.secondary', mb: 1.5 }}
+      >
+        Markdown Documents
       </Typography>
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {DOCS.map((d) => (
-          <Grid key={d.title} size={{ xs: 12, md: 6, lg: 4 }}>
+          <Grid key={d.id} size={{ xs: 12, md: 6, lg: 4 }}>
             <Card
               elevation={0}
               sx={{
@@ -94,7 +151,18 @@ export function DocumentationPage() {
             >
               <CardContent>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', mb: 1 }}>
-                  <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: `${d.color}18`, color: d.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 2,
+                      bgcolor: `${d.color}18`,
+                      color: d.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     {d.icon}
                   </Box>
                   <Box sx={{ flex: 1 }}>
@@ -108,14 +176,13 @@ export function DocumentationPage() {
                 </Stack>
               </CardContent>
               <CardActions sx={{ px: 2, pb: 2, justifyContent: 'space-between' }}>
-                <Chip label={d.tag} size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: `${d.color}15`, color: d.color }} />
+                <Chip label="MD" size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: `${d.color}15`, color: d.color }} />
                 <Button
                   size="small"
-                  endIcon={<OpenIcon sx={{ fontSize: 14 }} />}
-                  onClick={() => window.open(d.href, '_blank')}
+                  onClick={() => handleDocOpen(d)}
                   sx={{ textTransform: 'none', fontWeight: 700, color: d.color }}
                 >
-                  Abrir
+                  Open
                 </Button>
               </CardActions>
             </Card>
@@ -124,19 +191,22 @@ export function DocumentationPage() {
       </Grid>
 
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.secondary' }}>
-          Diagramas HTML (archify)
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.secondary' }}
+        >
+          HTML Diagrams (archify)
         </Typography>
-        {preview && (
-          <Button size="small" onClick={() => setPreview(null)} sx={{ borderRadius: 2 }}>
-            Cerrar preview
+        {previewDiagram && (
+          <Button size="small" onClick={() => handleDiagramPreview(previewDiagram)} sx={{ borderRadius: 2 }}>
+            Close preview
           </Button>
         )}
       </Stack>
 
       <Grid container spacing={2}>
         {DIAGRAMS.map((d) => (
-          <Grid key={d.title} size={{ xs: 12, md: 6 }}>
+          <Grid key={d.id} size={{ xs: 12, md: 6 }}>
             <Paper
               elevation={0}
               sx={{
@@ -162,18 +232,18 @@ export function DocumentationPage() {
                 <Button
                   size="small"
                   variant="contained"
-                  onClick={() => window.open(d.href, '_blank')}
+                  onClick={() => window.open(`/api/docs/${encodeURIComponent(d.file)}`, '_blank')}
                   sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, bgcolor: d.color, '&:hover': { filter: 'brightness(0.9)' } }}
                 >
-                  Abrir
+                  Open
                 </Button>
                 <Button
                   size="small"
                   variant="outlined"
-                  onClick={() => setPreview(preview === d.href ? null : d.href)}
+                  onClick={() => handleDiagramPreview(d.id)}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {preview === d.href ? 'Ocultar' : 'Preview'}
+                  {previewDiagram === d.id ? 'Hide' : 'Preview'}
                 </Button>
               </Stack>
             </Paper>
@@ -181,11 +251,11 @@ export function DocumentationPage() {
         ))}
       </Grid>
 
-      {preview && (
+      {previewDiagram && getDiagram(previewDiagram) && (
         <Box sx={{ mt: 3 }}>
           <Divider sx={{ mb: 2 }} />
           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-            Preview: {preview}
+            Preview: {getDiagram(previewDiagram)!.title}
           </Typography>
           <Paper
             elevation={0}
@@ -197,10 +267,64 @@ export function DocumentationPage() {
               height: 720,
             }}
           >
-            <Box component="iframe" src={preview} sx={{ width: '100%', height: '100%', border: 0 }} title="Diagram preview" />
+            <Box
+              component="iframe"
+              src={`/api/docs/${encodeURIComponent(getDiagram(previewDiagram)!.file)}`}
+              sx={{ width: '100%', height: '100%', border: 0 }}
+              title="Diagram preview"
+            />
           </Paper>
         </Box>
       )}
+
+      <Dialog
+        open={!!mdOpen}
+        onClose={() => {
+          setMdOpen(null);
+          const p = new URLSearchParams(searchParams);
+          p.delete('doc');
+          setSearchParams(p, { replace: true });
+        }}
+        maxWidth="md"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: '80vh' } } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700 }}>
+          {mdOpen}
+          <IconButton
+            onClick={() => {
+              setMdOpen(null);
+              const p = new URLSearchParams(searchParams);
+              p.delete('doc');
+              setSearchParams(p, { replace: true });
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {mdLoading ? (
+            <Typography variant="body2" color="text.secondary">
+              Loading...
+            </Typography>
+          ) : (
+            <Box
+              component="pre"
+              sx={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontFamily: 'monospace',
+                fontSize: '0.82rem',
+                lineHeight: 1.6,
+                m: 0,
+                color: isDark ? '#cbd5e1' : '#334155',
+              }}
+            >
+              {mdContent}
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
