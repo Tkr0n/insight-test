@@ -43,17 +43,21 @@ import { apiClient } from '../api/axios-client';
 function NavButton({
   label,
   active,
+  menuOpen,
   onClick,
   icon,
   hasMenu,
 }: {
   label: string;
   active?: boolean;
+  menuOpen?: boolean;
   onClick: (e: React.MouseEvent<HTMLElement>) => void;
   icon: React.ReactNode;
   hasMenu?: boolean;
 }) {
   const { mode } = useColorMode();
+  const isOpen = Boolean(hasMenu && menuOpen && !active);
+  const borderColor = isOpen ? (mode === 'dark' ? '#6366f1' : '#4f46e5') : 'transparent';
   return (
     <Button
       onClick={onClick}
@@ -65,6 +69,7 @@ function NavButton({
         fontWeight: active ? 700 : 600,
         color: active ? '#4f46e5' : mode === 'dark' ? '#cbd5e1' : '#475569',
         bgcolor: active ? (mode === 'dark' ? 'rgba(79,70,229,0.15)' : '#eef2ff') : 'transparent',
+        border: `1px solid ${borderColor}`,
         px: 1.75,
         py: 0.7,
         '&:hover': { bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9' },
@@ -159,14 +164,16 @@ export function Layout({ children }: LayoutProps) {
               <NavButton
                 label="Users"
                 icon={<UsersIcon sx={{ fontSize: 18 }} />}
-                active={isActive('/users') || Boolean(usersAnchor)}
+                active={isActive('/users')}
+                menuOpen={Boolean(usersAnchor)}
                 hasMenu
                 onClick={(e) => setUsersAnchor(e.currentTarget)}
               />
               <NavButton
                 label="Documentation"
                 icon={<DocsIcon sx={{ fontSize: 18 }} />}
-                active={isActive('/docs') || Boolean(docsAnchor)}
+                active={isActive('/docs')}
+                menuOpen={Boolean(docsAnchor)}
                 hasMenu
                 onClick={(e) => setDocsAnchor(e.currentTarget)}
               />
