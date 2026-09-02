@@ -121,7 +121,7 @@ module "ecs" {
 
 resource "aws_iam_role_policy" "backend_lambda_invoke" {
   name   = "${var.project_name}-backend-invoke-lambda"
-  role   = module.ecs.task_role_arn
+  role   = module.ecs.task_role_name
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
