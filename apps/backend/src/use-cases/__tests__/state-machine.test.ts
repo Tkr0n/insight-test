@@ -13,16 +13,16 @@ describe('State Machine', () => {
       expect(VALID_TRANSITIONS.PENDING).toEqual(['IN_PROGRESS', 'ARCHIVED']);
     });
 
-    it('IN_PROGRESS can transition to DONE and ARCHIVED', () => {
-      expect(VALID_TRANSITIONS.IN_PROGRESS).toEqual(['DONE', 'ARCHIVED']);
+    it('IN_PROGRESS can transition to PENDING, DONE and ARCHIVED', () => {
+      expect(VALID_TRANSITIONS.IN_PROGRESS).toEqual(['PENDING', 'DONE', 'ARCHIVED']);
     });
 
-    it('DONE can transition to ARCHIVED', () => {
-      expect(VALID_TRANSITIONS.DONE).toEqual(['ARCHIVED']);
+    it('DONE can transition to IN_PROGRESS and ARCHIVED', () => {
+      expect(VALID_TRANSITIONS.DONE).toEqual(['IN_PROGRESS', 'ARCHIVED']);
     });
 
-    it('ARCHIVED has no transitions', () => {
-      expect(VALID_TRANSITIONS.ARCHIVED).toEqual([]);
+    it('ARCHIVED can transition to DONE (unarchive)', () => {
+      expect(VALID_TRANSITIONS.ARCHIVED).toEqual(['DONE']);
     });
   });
 
@@ -30,9 +30,12 @@ describe('State Machine', () => {
     const validCases: [TaskStatus, TaskStatus][] = [
       ['PENDING', 'IN_PROGRESS'],
       ['PENDING', 'ARCHIVED'],
+      ['IN_PROGRESS', 'PENDING'],
       ['IN_PROGRESS', 'DONE'],
       ['IN_PROGRESS', 'ARCHIVED'],
+      ['DONE', 'IN_PROGRESS'],
       ['DONE', 'ARCHIVED'],
+      ['ARCHIVED', 'DONE'],
     ];
 
     it.each(validCases)('allows %s → %s', (from, to) => {
@@ -42,15 +45,14 @@ describe('State Machine', () => {
     const invalidCases: [TaskStatus, TaskStatus][] = [
       ['PENDING', 'DONE'],
       ['PENDING', 'PENDING'],
-      ['IN_PROGRESS', 'PENDING'],
       ['IN_PROGRESS', 'IN_PROGRESS'],
       ['DONE', 'PENDING'],
-      ['DONE', 'IN_PROGRESS'],
       ['DONE', 'DONE'],
       ['ARCHIVED', 'PENDING'],
       ['ARCHIVED', 'IN_PROGRESS'],
-      ['ARCHIVED', 'DONE'],
       ['ARCHIVED', 'ARCHIVED'],
+      ['ARCHIVED', 'ARCHIVED'],
+      ['PENDING', 'DONE'],
     ];
 
     it.each(invalidCases)('rejects %s → %s', (from, to) => {
@@ -65,7 +67,7 @@ describe('State Machine', () => {
 
     it('sets error name to InvalidStateTransitionError', () => {
       try {
-        validateStateTransition('DONE', 'PENDING');
+        validateStateTransition('PENDING', 'DONE');
         fail('Should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(InvalidStateTransitionError);

@@ -199,10 +199,12 @@ export function KanbanBoard({
                       task={task}
                       assigneeEmail={task.assigneeId ? (assigneeEmailMap?.get(task.assigneeId) ?? null) : null}
                       onTransition={onTransition}
+                      onMove={onMove}
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onShare={onShare}
                       isDraggable={false}
+                      isMobile
                       currentUserId={currentUserId}
                     />
                   ))

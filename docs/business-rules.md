@@ -7,9 +7,9 @@
 * **Delete:** Logical (Soft Delete) or physical deletion of the task.
 
 ## Strict Domain Rules
-1. **State Machine:** The lifecycle of a task is strictly sequential: `PENDING → IN_PROGRESS → DONE → ARCHIVED`. Any invalid transition (e.g., `PENDING → DONE`) will return an HTTP `422 Unprocessable Entity` error.
+1. **State Machine (reversible):** The lifecycle allows forward progression `PENDING → IN_PROGRESS → DONE → ARCHIVED` and backward correction one step at a time. Valid transitions are `PENDING ↔ IN_PROGRESS`, `IN_PROGRESS ↔ DONE`, `DONE ↔ ARCHIVED` plus direct archive `PENDING/IN_PROGRESS → ARCHIVED`. Any other jump (e.g., `PENDING → DONE`) returns HTTP `422 Unprocessable Entity`.
 2. **Ownership:** Only the original creator of the task can advance its status to `DONE`.
-3. **Partial Immutability:** Once the task reaches the `DONE` status, it is locked for editing. The only permitted exception is fixing typographical errors in the `title` field.
+3. **Partial Immutability:** Once the task reaches the `DONE` or `ARCHIVED` status, it is locked for editing. The only permitted mutations are `title` typo fixes and valid state transitions (e.g., `DONE → ARCHIVED` or `ARCHIVED → DONE`/`DONE → IN_PROGRESS` for correction). `description` remains locked.
 
 ## Extended Task Fields
 Extended attributes introduced to support prioritization, scheduling, assignment and discovery:

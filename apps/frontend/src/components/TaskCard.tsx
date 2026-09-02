@@ -21,11 +21,13 @@ import {
   Label as TagIcon,
   Flag as UrgencyIcon,
   Star as ImportanceIcon,
+  ArrowBack as PrevIcon,
+  ArrowForward as NextIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { StatusChip } from './StatusChip';
 import type { Task, TaskStatus } from '../types/task';
-import { VALID_TRANSITIONS } from '../types/task';
+import { VALID_TRANSITIONS, STATUS_ORDER } from '../types/task';
 import { getDeadlineColor } from '../utils/deadline';
 import { getPriorityLabel, getUrgencyMeta, getImportanceMeta } from '../utils/priority';
 import { formatDateISO } from '../utils/formatDate';
@@ -41,6 +43,8 @@ interface TaskCardProps {
   isDraggable?: boolean;
   currentUserId?: string;
   onShare?: (task: Task) => void;
+  isMobile?: boolean;
+  onMove?: (taskId: string, status: TaskStatus) => void;
 }
 
 function getTransitionAction(status: TaskStatus): { label: string; icon: React.ReactNode } | null {
@@ -73,6 +77,8 @@ export function TaskCard({
   isDraggable = false,
   currentUserId,
   onShare,
+  isMobile = false,
+  onMove,
 }: TaskCardProps) {
   void currentUserId;
   const theme = useTheme();
@@ -89,6 +95,13 @@ export function TaskCard({
 
   const startLabel = formatDateISO(task.startDate);
   const dueLabel = formatDateISO(task.dueDate);
+
+  const currentIdx = STATUS_ORDER.indexOf(task.status);
+  const prevStatus = currentIdx > 0 ? STATUS_ORDER[currentIdx - 1] : null;
+  const nextStatus = currentIdx < STATUS_ORDER.length - 1 ? STATUS_ORDER[currentIdx + 1] : null;
+  const canGoPrev = prevStatus ? (VALID_TRANSITIONS[task.status]?.includes(prevStatus) ?? false) : false;
+  const canGoNext = nextStatus ? (VALID_TRANSITIONS[task.status]?.includes(nextStatus) ?? false) : false;
+  const mobileMoveHandler = onMove ?? onTransition;
 
   return (
     <Card
@@ -292,7 +305,7 @@ export function TaskCard({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
+          justifyContent: isMobile ? 'space-between' : 'flex-end',
           gap: 0.25,
           px: 1,
           py: 0.5,
@@ -300,71 +313,115 @@ export function TaskCard({
           borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)'}`,
         }}
       >
-        {onShare && (
-          <Tooltip title="Share">
-            <IconButton
-              size="small"
-              onClick={() => onShare(task)}
-              aria-label="Share"
-              sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
-            >
-              <ShareIcon sx={{ fontSize: 15 }} />
-            </IconButton>
-          </Tooltip>
+        {isMobile && (
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Tooltip title={prevStatus ? `Move to ${prevStatus}` : 'No previous state'}>
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={!prevStatus || !canGoPrev || isTransitioning}
+                  onClick={() => prevStatus && mobileMoveHandler(task.id, prevStatus)}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    color: isDark ? '#94a3b8' : '#64748b',
+                    bgcolor: canGoPrev ? (isDark ? 'rgba(255,255,255,0.06)' : '#eef2ff') : 'transparent',
+                  }}
+                  aria-label="Move to previous"
+                >
+                  <PrevIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title={nextStatus ? `Move to ${nextStatus}` : 'No next state'}>
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={!nextStatus || !canGoNext || isTransitioning}
+                  onClick={() => nextStatus && mobileMoveHandler(task.id, nextStatus)}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    bgcolor: canGoNext ? '#4f46e5' : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+                    color: canGoNext ? '#fff' : isDark ? '#475569' : '#94a3b8',
+                    '&:hover': { bgcolor: canGoNext ? '#4338ca' : undefined },
+                  }}
+                  aria-label="Move to next"
+                >
+                  {isTransitioning ? <CircularProgress size={14} sx={{ color: canGoNext ? '#fff' : undefined }} /> : <NextIcon sx={{ fontSize: 15 }} />}
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
         )}
-        <Tooltip title="Edit">
-          <span>
-            <IconButton
-              size="small"
-              onClick={() => onEdit(task)}
-              disabled={task.status === 'DONE' || task.status === 'ARCHIVED' || isTransitioning}
-              sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
-            >
-              <EditIcon sx={{ fontSize: 15 }} />
-            </IconButton>
-          </span>
-        </Tooltip>
-        {transitionAction && (
-          <Tooltip title={transitionAction.label}>
+
+        <Stack direction="row" spacing={0.25} sx={{ alignItems: 'center', ml: isMobile ? 0 : 'auto' }}>
+          {onShare && (
+            <Tooltip title="Share">
+              <IconButton
+                size="small"
+                onClick={() => onShare(task)}
+                aria-label="Share"
+                sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
+              >
+                <ShareIcon sx={{ fontSize: 15 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Edit">
             <span>
               <IconButton
                 size="small"
-                onClick={() => {
-                  const nextStatus = VALID_TRANSITIONS[task.status]?.[0];
-                  if (nextStatus) onTransition(task.id, nextStatus);
-                }}
-                disabled={isTransitioning}
-                sx={{
-                  width: 28,
-                  height: 28,
-                  bgcolor: '#4f46e5',
-                  color: '#fff',
-                  '&:hover': { bgcolor: '#4338ca' },
-                  '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' },
-                }}
+                onClick={() => onEdit(task)}
+                disabled={task.status === 'ARCHIVED' || isTransitioning}
+                sx={{ width: 28, height: 28, color: isDark ? '#94a3b8' : '#64748b' }}
               >
-                {isTransitioning ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : transitionAction.icon}
+                <EditIcon sx={{ fontSize: 15 }} />
               </IconButton>
             </span>
           </Tooltip>
-        )}
-        <Tooltip title="Delete">
-          <span>
-            <IconButton
-              size="small"
-              onClick={() => onDelete(task.id)}
-              disabled={isDeleting}
-              sx={{
-                width: 28,
-                height: 28,
-                color: isDark ? '#64748b' : '#94a3b8',
-                '&:hover': { color: '#ef4444', bgcolor: isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2' },
-              }}
-            >
-              {isDeleting ? <CircularProgress size={14} /> : <DeleteIcon sx={{ fontSize: 15 }} />}
-            </IconButton>
-          </span>
-        </Tooltip>
+          {!isMobile && transitionAction && (
+            <Tooltip title={transitionAction.label}>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    const nextStat = VALID_TRANSITIONS[task.status]?.find((s) => s === nextStatus) ?? VALID_TRANSITIONS[task.status]?.[0];
+                    if (nextStat) onTransition(task.id, nextStat);
+                  }}
+                  disabled={isTransitioning}
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    bgcolor: '#4f46e5',
+                    color: '#fff',
+                    '&:hover': { bgcolor: '#4338ca' },
+                    '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)' },
+                  }}
+                >
+                  {isTransitioning ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : transitionAction.icon}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+          <Tooltip title="Delete">
+            <span>
+              <IconButton
+                size="small"
+                onClick={() => onDelete(task.id)}
+                disabled={isDeleting}
+                sx={{
+                  width: 28,
+                  height: 28,
+                  color: isDark ? '#64748b' : '#94a3b8',
+                  '&:hover': { color: '#ef4444', bgcolor: isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2' },
+                }}
+              >
+                {isDeleting ? <CircularProgress size={14} /> : <DeleteIcon sx={{ fontSize: 15 }} />}
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
       </Box>
     </Card>
   );

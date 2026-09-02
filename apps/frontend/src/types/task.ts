@@ -50,9 +50,9 @@ export interface ApiResponse<T> {
 
 export const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   PENDING: ['IN_PROGRESS', 'ARCHIVED'],
-  IN_PROGRESS: ['DONE', 'ARCHIVED'],
-  DONE: ['ARCHIVED'],
-  ARCHIVED: [],
+  IN_PROGRESS: ['PENDING', 'DONE', 'ARCHIVED'],
+  DONE: ['IN_PROGRESS', 'ARCHIVED'],
+  ARCHIVED: ['DONE'],
 };
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
@@ -61,3 +61,5 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   DONE: 'Done',
   ARCHIVED: 'Archived',
 };
+
+export const STATUS_ORDER: TaskStatus[] = ['PENDING', 'IN_PROGRESS', 'DONE', 'ARCHIVED'];

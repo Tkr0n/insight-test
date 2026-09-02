@@ -153,12 +153,21 @@ export class TaskRepository implements ITaskRepository {
     }
 
     if (task.status === 'DONE' || task.status === 'ARCHIVED') {
-      if (data.status || data.description) {
-        throw new AppError(422, 'Task is locked: cannot edit status or description of completed tasks');
+      if (data.description !== undefined) {
+        throw new AppError(422, 'Task is locked: cannot edit description of completed tasks');
       }
-    }
-
-    if (data.status) {
+      if (data.status !== undefined) {
+        validateStateTransition(task.status, data.status as StateStatus);
+      } else if (Object.keys(data).some((k) => !['title'].includes(k) && (data as Record<string, unknown>)[k] !== undefined)) {
+        // Allow only title edits when locked, but status itself is validated above
+        const nonTitleKeys = ['description', 'assigneeId', 'startDate', 'dueDate', 'urgency', 'importance', 'tags'].filter(
+          (k) => (data as Record<string, unknown>)[k] !== undefined
+        );
+        if (nonTitleKeys.length > 0) {
+          throw new AppError(422, 'Task is locked: only title can be edited for completed tasks');
+        }
+      }
+    } else if (data.status) {
       validateStateTransition(task.status, data.status as StateStatus);
     }
 
@@ -194,12 +203,20 @@ export class TaskRepository implements ITaskRepository {
     }
 
     if (task.status === 'DONE' || task.status === 'ARCHIVED') {
-      if (data.status || data.description) {
-        throw new AppError(422, 'Task is locked: cannot edit status or description of completed tasks');
+      if (data.description !== undefined) {
+        throw new AppError(422, 'Task is locked: cannot edit description of completed tasks');
       }
-    }
-
-    if (data.status) {
+      if (data.status !== undefined) {
+        validateStateTransition(task.status, data.status as StateStatus);
+      } else {
+        const blockedKeys = ['assigneeId', 'startDate', 'dueDate', 'urgency', 'importance', 'tags'].filter(
+          (k) => (data as Record<string, unknown>)[k] !== undefined
+        );
+        if (blockedKeys.length > 0) {
+          throw new AppError(422, 'Task is locked: only title can be edited for completed tasks');
+        }
+      }
+    } else if (data.status) {
       validateStateTransition(task.status, data.status as StateStatus);
     }
 

@@ -4,9 +4,9 @@ export type { TaskStatus };
 
 export const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   PENDING: ['IN_PROGRESS', 'ARCHIVED'],
-  IN_PROGRESS: ['DONE', 'ARCHIVED'],
-  DONE: ['ARCHIVED'],
-  ARCHIVED: [],
+  IN_PROGRESS: ['PENDING', 'DONE', 'ARCHIVED'],
+  DONE: ['IN_PROGRESS', 'ARCHIVED'],
+  ARCHIVED: ['DONE'],
 };
 
 export class InvalidStateTransitionError extends Error {

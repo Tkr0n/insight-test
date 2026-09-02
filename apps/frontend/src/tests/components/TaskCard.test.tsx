@@ -85,9 +85,15 @@ describe('TaskCard', () => {
     expect(onDelete).toHaveBeenCalledWith('550e8400-e29b-41d4-a716-446655440000');
   });
 
-  it('disables edit button for DONE tasks', () => {
-    render(<TaskCard task={createTask({ status: 'DONE' })} {...defaultProps} />);
+  it('disables edit button for ARCHIVED tasks', () => {
+    render(<TaskCard task={createTask({ status: 'ARCHIVED' })} {...defaultProps} />);
     const editWrapper = screen.getByLabelText('Edit');
     expect(within(editWrapper).getByRole('button')).toBeDisabled();
+  });
+
+  it('enables edit button for DONE tasks (title typo fix allowed)', () => {
+    render(<TaskCard task={createTask({ status: 'DONE' })} {...defaultProps} />);
+    const editWrapper = screen.getByLabelText('Edit');
+    expect(within(editWrapper).getByRole('button')).not.toBeDisabled();
   });
 });
