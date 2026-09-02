@@ -233,6 +233,8 @@ jobs:
         working-directory: infra
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_csrf_secret: ${{ secrets.CSRF_SECRET }}
+          TF_VAR_cors_origin: ${{ secrets.CORS_ORIGIN }}
 
       - name: Terraform Apply
         run: tofu apply -input=false -auto-approve tfplan
@@ -284,7 +286,7 @@ jobs:
             --cpu 256 \
             --memory 512 \
             --execution-role-arn $(aws ecs describe-task-definition --task-definition $TASK_DEF --query "taskDefinition.executionRoleArn" --output text) \
-            --container-definitions "[{\"name\":\"backend\",\"image\":\"ghcr.io/tkr0n/insight-test/insightt-backend:latest\",\"essential\":true,\"portMappings\":[{\"containerPort\":3000,\"hostPort\":3000,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"DATABASE_URL\",\"value\":\"postgresql://insight_test_user:${{ secrets.DB_PASSWORD }}@$DB_HOSTNAME:$DB_PORT/insight_test_db\"},{\"name\":\"REDIS_URL\",\"value\":\"redis://$REDIS_ENDPOINT:$REDIS_PORT\"},{\"name\":\"AWS_REGION\",\"value\":\"us-east-2\"},{\"name\":\"COGNITO_USER_POOL_ID\",\"value\":\"$COGNITO_POOL_ID\"},{\"name\":\"COGNITO_CLIENT_ID\",\"value\":\"$COGNITO_CLIENT_ID\"},{\"name\":\"NODE_ENV\",\"value\":\"production\"},{\"name\":\"PORT\",\"value\":\"3000\"},{\"name\":\"CORS_ORIGIN\",\"value\":\"*\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/insight-test-tkr0n-backend\",\"awslogs-region\":\"us-east-2\",\"awslogs-stream-prefix\":\"ecs\"}}}]" \
+            --container-definitions "[{\"name\":\"backend\",\"image\":\"ghcr.io/tkr0n/insight-test/insightt-backend:latest\",\"essential\":true,\"portMappings\":[{\"containerPort\":3000,\"hostPort\":3000,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"DATABASE_URL\",\"value\":\"postgresql://insight_test_user:${{ secrets.DB_PASSWORD }}@$DB_HOSTNAME:$DB_PORT/insight_test_db\"},{\"name\":\"REDIS_URL\",\"value\":\"redis://$REDIS_ENDPOINT:$REDIS_PORT\"},{\"name\":\"AWS_REGION\",\"value\":\"us-east-2\"},{\"name\":\"COGNITO_USER_POOL_ID\",\"value\":\"$COGNITO_POOL_ID\"},{\"name\":\"COGNITO_CLIENT_ID\",\"value\":\"$COGNITO_CLIENT_ID\"},{\"name\":\"NODE_ENV\",\"value\":\"production\"},{\"name\":\"PORT\",\"value\":\"3000\"},{\"name\":\"CORS_ORIGIN\",\"value\":\"${{ secrets.CORS_ORIGIN }}\"},{\"name\":\"CSRF_SECRET\",\"value\":\"${{ secrets.CSRF_SECRET }}\"},{\"name\":\"COOKIE_SECURE\",\"value\":\"true\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/insight-test-tkr0n-backend\",\"awslogs-region\":\"us-east-2\",\"awslogs-stream-prefix\":\"ecs\"}}}]" \
             > /dev/null
           
           aws ecs update-service \
