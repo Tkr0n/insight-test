@@ -100,7 +100,6 @@ router.post(
   validate(createUserSchema, 'body'),
   asyncHandler(async (req: Request, res: Response) => {
     const { email, name } = req.body as { email: string; name?: string | null };
-    const id = randomUUID();
     const temporaryPassword = generateTemporaryPassword();
 
     if (!env.COGNITO_USER_POOL_ID) {
@@ -110,8 +109,9 @@ router.post(
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) throw new AppError(409, 'Email already exists');
 
+    let cognitoSub: string | undefined;
     try {
-      await newCognitoClient().send(
+      const created = await newCognitoClient().send(
         new AdminCreateUserCommand({
           UserPoolId: env.COGNITO_USER_POOL_ID,
           Username: email,
@@ -124,6 +124,9 @@ router.post(
           ],
         })
       );
+      // Use the Cognito sub as the DB id so the user's JWT identity matches the
+      // row, otherwise tasks/permissions get attributed to a mismatched id.
+      cognitoSub = created.User?.Attributes?.find((a) => a.Name === 'sub')?.Value;
     } catch (err: unknown) {
       const typed = err as { name?: string; message?: string };
       if (typed.name === 'UsernameExistsException') {
@@ -131,6 +134,8 @@ router.post(
       }
       throw new AppError(500, typed.message ?? 'Failed to create Cognito user');
     }
+
+    const id = cognitoSub ?? randomUUID();
 
     try {
       const user = await prisma.user.create({
