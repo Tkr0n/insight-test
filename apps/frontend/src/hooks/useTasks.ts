@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchTasks } from '../api/tasks.api';
-import type { Task } from '../types/task';
+import type { Task, TaskFilters } from '../types/task';
 
-export function useTasks() {
+export function useTasks(filters?: TaskFilters) {
   return useQuery<Task[]>({
-    queryKey: ['tasks'],
-    queryFn: fetchTasks,
+    queryKey: ['tasks', filters],
+    queryFn: () => fetchTasks(filters),
   });
 }

@@ -27,3 +27,15 @@ variable "db_user" {
   type        = string
   default     = "insight_test_user"
 }
+
+variable "csrf_secret" {
+  description = "HMAC secret for Double Submit CSRF (min 32 chars)"
+  type        = string
+  sensitive   = true
+}
+
+variable "cors_origin" {
+  description = "Allowed CORS origin for backend (must be exact when using cookies, not *)"
+  type        = string
+  default     = ""
+}

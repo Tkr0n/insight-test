@@ -71,13 +71,19 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     return;
   }
 
+  const cookieToken = (req as Request & { cookies?: Record<string, string> }).cookies?.['__Host-id_token'];
   const authHeader = req.headers.authorization;
 
-  if (!authHeader?.startsWith('Bearer ')) {
-    throw new AppError(401, 'Missing or invalid authorization header');
+  let token: string | undefined;
+  if (cookieToken) {
+    token = cookieToken;
+  } else if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    throw new AppError(401, 'Missing or invalid authorization header');
+  }
 
   try {
     const payload = await verifyToken(token);

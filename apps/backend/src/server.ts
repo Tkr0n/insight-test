@@ -1,9 +1,14 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import { errorHandler } from './middlewares/error-handler.js';
 import { taskRoutes } from './controllers/task.controller.js';
+import { shareRoutes } from './controllers/share.controller.js';
+import { userRoutes } from './controllers/user.controller.js';
+import { authRoutes } from './controllers/auth.controller.js';
+import { csrfProtection } from './middlewares/csrf.js';
 import { resolveCognitoConfig } from './config/cognito.js';
 
 const app = express();
@@ -11,10 +16,15 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN,
+  credentials: true,
 }));
+app.use(cookieParser());
 app.use(express.json());
 
-app.use('/api/tasks', taskRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', csrfProtection, taskRoutes);
+app.use('/api/tasks/:id/share', csrfProtection, shareRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

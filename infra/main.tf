@@ -94,13 +94,15 @@ module "ecs" {
   backend_port  = 3000
   
   backend_env = {
-    DATABASE_URL      = "postgresql://${var.db_user}:${var.db_password}@${module.rds.hostname}:${module.rds.port}/${var.db_name}"
-    REDIS_URL         = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
-    AWS_REGION        = var.aws_region
-    COGNITO_USER_POOL_ID = module.cognito.user_pool_id
-    COGNITO_CLIENT_ID    = module.cognito.client_id
-    NODE_ENV          = "production"
-    PORT              = "3000"
-    CORS_ORIGIN      = "*"
+    DATABASE_URL           = "postgresql://${var.db_user}:${var.db_password}@${module.rds.hostname}:${module.rds.port}/${var.db_name}"
+    REDIS_URL              = "redis://${module.elasticache.endpoint}:${module.elasticache.port}"
+    AWS_REGION             = var.aws_region
+    COGNITO_USER_POOL_ID   = module.cognito.user_pool_id
+    COGNITO_CLIENT_ID      = module.cognito.client_id
+    NODE_ENV               = "production"
+    PORT                   = "3000"
+    CORS_ORIGIN            = var.cors_origin != "" ? var.cors_origin : "https://${var.project_name}.example.com"
+    CSRF_SECRET            = var.csrf_secret
+    COOKIE_SECURE          = "true"
   }
 }

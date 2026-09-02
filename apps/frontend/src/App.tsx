@@ -23,8 +23,11 @@ const theme = createTheme({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('id_token');
-  if (!token) {
+  // With httpOnly cookie, frontend cannot read token directly.
+  // Keep lightweight check via localStorage fallback or csrf cookie presence.
+  // Actual auth is validated by backend (401 -> axios interceptor redirects).
+  const hasSession = document.cookie.includes('__Host-csrf') || !!localStorage.getItem('id_token');
+  if (!hasSession) {
     return <Navigate to="/login" replace />;
   }
   return <Layout>{children}</Layout>;

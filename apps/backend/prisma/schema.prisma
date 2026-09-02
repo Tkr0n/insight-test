@@ -14,15 +14,51 @@ enum TaskStatus {
   ARCHIVED
 }
 
+model User {
+  id        String   @id @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  name      String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ownedTasks    Task[]      @relation("Owner")
+  assignedTasks Task[]      @relation("Assignee")
+  shares        TaskShare[]
+
+  @@map("users")
+}
+
 model Task {
   id          String     @id @default(uuid()) @db.Uuid
   title       String     @db.VarChar(255)
   description String?    @db.Text
   status      TaskStatus @default(PENDING)
   ownerId     String     @map("owner_id") @db.VarChar(255)
+  assigneeId  String?    @map("assignee_id") @db.VarChar(255)
+  startDate   DateTime?  @map("start_date") @db.Date
+  dueDate     DateTime?  @map("due_date") @db.Date
+  urgency     Int        @default(2)
+  importance  Int        @default(2)
+  tags        String[]   @default([])
   version     Int        @default(1)
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
 
+  owner    User        @relation("Owner", fields: [ownerId], references: [id])
+  assignee User?       @relation("Assignee", fields: [assigneeId], references: [id])
+  shares   TaskShare[]
+
   @@map("tasks")
+}
+
+model TaskShare {
+  id       String   @id @default(uuid()) @db.Uuid
+  taskId   String   @map("task_id") @db.Uuid
+  userId   String   @map("user_id") @db.VarChar(255)
+  sharedAt DateTime @default(now()) @map("shared_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_shares")
 }

@@ -17,7 +17,13 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { apiClient } = await import('../api/axios-client');
+      await apiClient.post('/auth/logout');
+    } catch {
+      // proceed to logout locally even if backend fails
+    }
     localStorage.removeItem('id_token');
     navigate('/login', { replace: true });
   };

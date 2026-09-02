@@ -10,6 +10,7 @@ import {
   Stack,
   Alert,
 } from '@mui/material';
+import { apiClient } from '../api/axios-client';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -24,45 +25,13 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `https://cognito-idp.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-amz-json-1.1',
-            'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
-          },
-          body: JSON.stringify({
-            AuthParameters: {
-              USERNAME: email,
-              PASSWORD: password,
-            },
-            AuthFlow: 'USER_PASSWORD_AUTH',
-            ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-          }),
-        }
-      );
-
-      const data = (await response.json()) as {
-        AuthenticationResult?: { IdToken: string };
-        message?: string;
-        __type?: string;
-      };
-
-      if (data.AuthenticationResult?.IdToken) {
-        localStorage.setItem('id_token', data.AuthenticationResult.IdToken);
-        navigate('/tasks', { replace: true });
-      } else {
-        const cognitoErrors: Record<string, string> = {
-          UserNotFoundException: 'No account found with this email.',
-          NotAuthorizedException: 'Incorrect email or password.',
-          UserNotConfirmedException: 'Please confirm your account first.',
-          LimitExceededException: 'Too many attempts. Please try again later.',
-        };
-        setError(cognitoErrors[data.__type ?? ''] ?? data.message ?? 'Invalid credentials');
-      }
-    } catch {
-      setError('Connection error. Please try again.');
+      await apiClient.post('/auth/login', { email, password });
+      // Remove legacy token if existed - now using httpOnly cookie
+      localStorage.removeItem('id_token');
+      navigate('/tasks', { replace: true });
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } }; message?: string };
+      setError(axiosErr.response?.data?.error ?? axiosErr.message ?? 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }

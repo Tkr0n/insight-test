@@ -6,9 +6,42 @@ export interface Task {
   description: string | null;
   status: TaskStatus;
   ownerId: string;
+  assigneeId: string | null;
+  startDate: string | null;
+  dueDate: string | null;
+  urgency: number;
+  importance: number;
+  tags: string[];
   version: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TaskShare {
+  id: string;
+  taskId: string;
+  userId: string;
+  sharedAt: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+export interface TaskFilters {
+  title?: string;
+  tags?: string[];
+  assigneeId?: string;
+  urgency?: number;
+  importance?: number;
+  startDateFrom?: string;
+  startDateTo?: string;
+  dueDateFrom?: string;
+  dueDateTo?: string;
+  overdue?: boolean;
+  status?: TaskStatus[];
 }
 
 export interface ApiResponse<T> {

@@ -22,7 +22,9 @@ services:
       AWS_REGION: us-east-1
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
       COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      CSRF_SECRET: ${CSRF_SECRET}
+      COOKIE_SECURE: "true"
     networks:
       - coolify
 
