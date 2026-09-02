@@ -1,4 +1,5 @@
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
@@ -227,7 +228,7 @@ resource "aws_ecs_task_definition" "frontend" {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.frontend.name
-        "awslogs-region"        = data.aws_caller_identity.current.account_id
+        "awslogs-region"        = data.aws_region.current.name
         "awslogs-stream-prefix" = "ecs"
       }
     }
@@ -267,7 +268,7 @@ resource "aws_ecs_task_definition" "backend" {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.backend.name
-        "awslogs-region"        = data.aws_caller_identity.current.account_id
+        "awslogs-region"        = data.aws_region.current.name
         "awslogs-stream-prefix" = "ecs"
       }
     }
