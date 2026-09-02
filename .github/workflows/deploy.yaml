@@ -242,6 +242,7 @@ jobs:
             > /dev/null
           
           echo "Frontend deployed to ECS"
+        working-directory: infra
 
       - name: Deploy backend to ECS
         run: |
@@ -279,6 +280,7 @@ jobs:
             > /dev/null
           
           echo "Backend deployed to ECS"
+        working-directory: infra
 
       - name: Wait for services to stabilize
         run: |
