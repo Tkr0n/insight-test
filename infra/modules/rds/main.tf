@@ -65,7 +65,7 @@ resource "aws_db_instance" "main" {
   multi_az               = false
   skip_final_snapshot    = true
   publicly_accessible    = false
-  backup_retention_period = 7
+  backup_retention_period = 1
 
   tags = {
     Project = var.project_name
