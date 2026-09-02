@@ -372,13 +372,13 @@ export function Layout({ children }: LayoutProps) {
                 </ListItemButton>
               ))}
               <Divider sx={{ my: 1 }} />
-              {[
+              {([
                 ['System Architecture', 'system.architecture'],
                 ['Auth Flow', 'auth-flow'],
                 ['Request Flow', 'request-flow'],
                 ['Task Lifecycle', 'task-lifecycle'],
                 ['Kanban Flow', 'kanban-flow'],
-              ].map(([label, diagram]) => (
+              ] as const).map(([label, diagram]) => (
                 <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => openDrawerDiagram(diagram)}>
                   <ListItemText primary={label} />
                 </ListItemButton>
