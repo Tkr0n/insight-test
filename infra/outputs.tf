@@ -38,12 +38,7 @@ output "api_url" {
   value       = module.apigateway.api_url
 }
 
-output "frontend_bucket" {
-  description = "S3 bucket for frontend"
-  value       = module.s3.bucket_id
-}
-
 output "frontend_url" {
-  description = "Frontend S3 website URL"
-  value       = "http://${module.s3.website_endpoint}"
+  description = "Frontend ALB URL"
+  value       = module.ecs.alb_url
 }

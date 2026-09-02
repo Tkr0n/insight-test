@@ -214,6 +214,40 @@ jobs:
         run: tofu apply -input=false -auto-approve tfplan
         working-directory: infra
 
+      - name: Deploy frontend to ECS
+        run: |
+          CLUSTER=$(tofu output -raw cluster_name)
+          SERVICE=$(tofu output -raw service_name)
+          
+          # Get current task definition
+          TASK_DEF=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --query "services[0].taskDefinition" --output text)
+          
+          # Register new task definition with latest image
+          aws ecs register-task-definition \
+            --family insight-test-tkr0n-frontend \
+            --network-mode awsvpc \
+            --requires-compatibilities FARGATE \
+            --cpu 256 \
+            --memory 512 \
+            --execution-role-arn $(aws ecs describe-task-definition --task-definition $TASK_DEF --query "taskDefinition.executionRoleArn" --output text) \
+            --container-definitions "[{\"name\":\"frontend\",\"image\":\"ghcr.io/tkr0n/insight-test/insightt-frontend:latest\",\"essential\":true,\"portMappings\":[{\"containerPort\":80,\"hostPort\":80,\"protocol\":\"tcp\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/insight-test-tkr0n-frontend\",\"awslogs-region\":\"us-east-2\",\"awslogs-stream-prefix\":\"ecs\"}}}]" \
+            > /dev/null
+          
+          # Update service with new task definition
+          aws ecs update-service \
+            --cluster $CLUSTER \
+            --service $SERVICE \
+            --task-definition insight-test-tkr0n-frontend \
+            --force-new-deployment \
+            > /dev/null
+          
+          echo "Frontend deployed to ECS"
+          
+          # Wait for service to be stable
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable --cluster $CLUSTER --services $SERVICE
+          echo "Service is stable"
+
       - name: Get frontend URL
         id: frontend-url
         run: |

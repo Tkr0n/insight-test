@@ -69,8 +69,23 @@ module "apigateway" {
   cognito_pool_arn  = module.cognito.user_pool_arn
 }
 
-module "s3" {
-  source = "./modules/s3"
+data "aws_vpc" "default" {
+  default = true
+}
 
-  project_name = var.project_name
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+module "ecs" {
+  source = "./modules/ecs"
+
+  project_name    = var.project_name
+  vpc_id          = data.aws_vpc.default.id
+  subnet_ids      = data.aws_subnets.default.ids
+  container_image = "ghcr.io/tkr0n/insight-test/insightt-frontend:latest"
+  container_port  = 80
 }
