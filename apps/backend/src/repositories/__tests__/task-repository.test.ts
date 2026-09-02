@@ -20,6 +20,9 @@ const baseTask = {
 
 function createMockPrisma() {
   return {
+    user: {
+      upsert: jest.fn().mockResolvedValue({ id: 'owner-1', email: 'owner@placeholder.local' }),
+    },
     task: {
       findUnique: jest.fn(),
       findFirst: jest.fn(),

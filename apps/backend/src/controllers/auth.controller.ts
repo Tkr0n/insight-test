@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { CognitoIdentityProviderClient, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
+import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
+import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/error-handler.js';
 import { validate } from '../middlewares/validate.js';
 import { loginSchema } from '../validations/auth.js';
@@ -58,6 +60,21 @@ router.post('/login', validate(loginSchema, 'body'), asyncHandler(async (req: Re
 
     if (!idToken) {
       throw new AppError(401, 'Invalid credentials');
+    }
+
+    // Ensure user exists in DB for FK constraints (owner/assignee)
+    try {
+      const payload = jwt.decode(idToken) as { sub?: string; email?: string; name?: string } | null;
+      if (payload?.sub) {
+        await prisma.user.upsert({
+          where: { id: payload.sub },
+          update: { email: payload.email ?? email, name: payload.name },
+          create: { id: payload.sub, email: payload.email ?? email, name: payload.name },
+        });
+      }
+    } catch {
+      // Non-blocking: log and continue (task creation will still fail if user missing)
+      console.warn('[auth] Failed to upsert user after login');
     }
 
     const csrfToken = generateCsrfToken();

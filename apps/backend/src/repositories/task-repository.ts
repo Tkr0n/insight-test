@@ -118,6 +118,19 @@ export class TaskRepository implements ITaskRepository {
   }
 
   async create(data: CreateTaskInput): Promise<Task> {
+    // Ensure owner exists (FK) — login should have created it, fallback for direct API use
+    await this.prisma.user.upsert({
+      where: { id: data.ownerId },
+      update: {},
+      create: { id: data.ownerId, email: `${data.ownerId}@placeholder.local` },
+    });
+    if (data.assigneeId) {
+      await this.prisma.user.upsert({
+        where: { id: data.assigneeId },
+        update: {},
+        create: { id: data.assigneeId, email: `${data.assigneeId}@placeholder.local` },
+      });
+    }
     return this.prisma.task.create({
       data: {
         title: data.title,
