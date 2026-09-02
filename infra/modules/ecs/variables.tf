@@ -13,17 +13,37 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "container_image" {
+# Frontend
+variable "frontend_image" {
   description = "Docker image for frontend"
   type        = string
 }
 
-variable "container_port" {
-  description = "Port exposed by container"
+variable "frontend_port" {
+  description = "Port exposed by frontend container"
   type        = number
   default     = 80
 }
 
+# Backend
+variable "backend_image" {
+  description = "Docker image for backend"
+  type        = string
+}
+
+variable "backend_port" {
+  description = "Port exposed by backend container"
+  type        = number
+  default     = 3000
+}
+
+variable "backend_env" {
+  description = "Environment variables for backend"
+  type        = map(string)
+  default     = {}
+}
+
+# Shared
 variable "task_cpu" {
   description = "Fargate task CPU units"
   type        = number

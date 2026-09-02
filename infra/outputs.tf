@@ -42,3 +42,18 @@ output "frontend_url" {
   description = "Frontend ALB URL"
   value       = module.ecs.alb_url
 }
+
+output "backend_service_name" {
+  description = "Backend ECS service name"
+  value       = module.ecs.backend_service_name
+}
+
+output "frontend_service_name" {
+  description = "Frontend ECS service name"
+  value       = module.ecs.frontend_service_name
+}
+
+output "ecs_cluster_name" {
+  description = "ECS cluster name"
+  value       = module.ecs.cluster_name
+}

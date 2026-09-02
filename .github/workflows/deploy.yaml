@@ -216,8 +216,8 @@ jobs:
 
       - name: Deploy frontend to ECS
         run: |
-          CLUSTER=$(tofu output -raw cluster_name)
-          SERVICE=$(tofu output -raw service_name)
+          CLUSTER=$(tofu output -raw ecs_cluster_name)
+          SERVICE=$(tofu output -raw frontend_service_name)
           
           # Get current task definition
           TASK_DEF=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --query "services[0].taskDefinition" --output text)
@@ -242,11 +242,54 @@ jobs:
             > /dev/null
           
           echo "Frontend deployed to ECS"
+
+      - name: Deploy backend to ECS
+        run: |
+          CLUSTER=$(tofu output -raw ecs_cluster_name)
+          SERVICE=$(tofu output -raw backend_service_name)
           
-          # Wait for service to be stable
-          echo "Waiting for service to stabilize..."
-          aws ecs wait services-stable --cluster $CLUSTER --services $SERVICE
-          echo "Service is stable"
+          # Get current task definition
+          TASK_DEF=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --query "services[0].taskDefinition" --output text)
+          
+          # Get environment variables from Terraform
+          DB_ENDPOINT=$(tofu output -raw rds_endpoint)
+          DB_PORT=$(tofu output -raw rds_port)
+          REDIS_ENDPOINT=$(tofu output -raw redis_endpoint)
+          REDIS_PORT=$(tofu output -raw redis_port)
+          COGNITO_POOL_ID=$(tofu output -raw cognito_user_pool_id)
+          COGNITO_CLIENT_ID=$(tofu output -raw cognito_client_id)
+          
+          # Register new task definition with latest image
+          aws ecs register-task-definition \
+            --family insight-test-tkr0n-backend \
+            --network-mode awsvpc \
+            --requires-compatibilities FARGATE \
+            --cpu 256 \
+            --memory 512 \
+            --execution-role-arn $(aws ecs describe-task-definition --task-definition $TASK_DEF --query "taskDefinition.executionRoleArn" --output text) \
+            --container-definitions "[{\"name\":\"backend\",\"image\":\"ghcr.io/tkr0n/insight-test/insightt-backend:latest\",\"essential\":true,\"portMappings\":[{\"containerPort\":3000,\"hostPort\":3000,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"DATABASE_URL\",\"value\":\"postgresql://insight_test_user:${{ secrets.DB_PASSWORD }}@$DB_ENDPOINT:$DB_PORT/insight_test_db\"},{\"name\":\"REDIS_URL\",\"value\":\"redis://$REDIS_ENDPOINT:$REDIS_PORT\"},{\"name\":\"AWS_REGION\",\"value\":\"us-east-2\"},{\"name\":\"COGNITO_USER_POOL_ID\",\"value\":\"$COGNITO_POOL_ID\"},{\"name\":\"COGNITO_CLIENT_ID\",\"value\":\"$COGNITO_CLIENT_ID\"},{\"name\":\"NODE_ENV\",\"value\":\"production\"},{\"name\":\"PORT\",\"value\":\"3000\"},{\"name\":\"CORS_ORIGIN\",\"value\":\"*\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"/ecs/insight-test-tkr0n-backend\",\"awslogs-region\":\"us-east-2\",\"awslogs-stream-prefix\":\"ecs\"}}}]" \
+            > /dev/null
+          
+          # Update service with new task definition
+          aws ecs update-service \
+            --cluster $CLUSTER \
+            --service $SERVICE \
+            --task-definition insight-test-tkr0n-backend \
+            --force-new-deployment \
+            > /dev/null
+          
+          echo "Backend deployed to ECS"
+
+      - name: Wait for services to stabilize
+        run: |
+          CLUSTER=$(tofu output -raw ecs_cluster_name)
+          FRONTEND_SERVICE=$(tofu output -raw frontend_service_name)
+          BACKEND_SERVICE=$(tofu output -raw backend_service_name)
+          
+          echo "Waiting for services to stabilize..."
+          aws ecs wait services-stable --cluster $CLUSTER --services $FRONTEND_SERVICE $BACKEND_SERVICE
+          echo "Services are stable"
+        working-directory: infra
 
       - name: Get frontend URL
         id: frontend-url
