@@ -204,13 +204,6 @@ jobs:
         run: tofu init
         working-directory: infra
 
-      - name: Import existing S3 buckets
-        run: |
-          tofu import module.s3.aws_s3_bucket.frontend insight-test-frontend || true
-        working-directory: infra
-        env:
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-
       - name: Terraform Plan
         run: tofu plan -input=false -out=tfplan
         working-directory: infra

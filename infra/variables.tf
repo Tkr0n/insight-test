@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project name for resource naming"
   type        = string
-  default     = "insight-test"
+  default     = "insight-test-tkr0n"
 }
 
 variable "db_password" {
