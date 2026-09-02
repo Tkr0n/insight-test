@@ -298,8 +298,10 @@ export function UsersPage() {
             value={createdPassword ?? ''}
             fullWidth
             size="small"
-            inputProps={{ readOnly: true }}
-            slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
+            slotProps={{
+              htmlInput: { readOnly: true },
+              input: { sx: { fontFamily: 'monospace' } },
+            }}
           />
         </DialogContent>
         <DialogActions>
