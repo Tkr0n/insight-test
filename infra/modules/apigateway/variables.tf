@@ -3,8 +3,8 @@ variable "project_name" {
   type        = string
 }
 
-variable "alb_listener_arn" {
-  description = "ARN of the ALB HTTPS listener that fronts the backend ECS service"
+variable "alb_dns_name" {
+  description = "Public DNS name of the ALB (HTTP_PROXY integration target)"
   type        = string
 }
 
@@ -21,9 +21,4 @@ variable "api_certificate_arn" {
 variable "cors_origins" {
   description = "Allowed origins for CORS with credentials"
   type        = list(string)
-}
-
-variable "internal_api_host" {
-  description = "Host header value the gateway sends to the ALB (matches the host-header listener rule)"
-  type        = string
 }

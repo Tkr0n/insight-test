@@ -47,3 +47,8 @@ output "http_listener_arn" {
   description = "ALB HTTP listener ARN (API Gateway integration target)"
   value       = aws_lb_listener.http.arn
 }
+
+output "alb_arn" {
+  description = "ALB ARN (WAF association target)"
+  value       = aws_lb.main.arn
+}

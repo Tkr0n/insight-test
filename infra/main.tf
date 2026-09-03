@@ -57,11 +57,10 @@ module "apigateway" {
   source = "./modules/apigateway"
 
   project_name        = var.project_name
-  alb_listener_arn    = module.ecs.http_listener_arn
+  alb_dns_name        = module.ecs.alb_dns_name
   api_domain          = "api.${var.domain_name}"
   api_certificate_arn = aws_acm_certificate.api.arn
   cors_origins        = ["https://${var.domain_name}"]
-  internal_api_host   = "api.${var.domain_name}"
 }
 
 data "aws_vpc" "default" {
@@ -109,7 +108,6 @@ module "ecs" {
   certificate_arn = aws_acm_certificate.main.arn
 
   additional_certificate_arn = aws_acm_certificate.api.arn
-  internal_api_host          = "api.${var.domain_name}"
 
   backend_env = {
     DATABASE_URL           = "postgresql://${var.db_user}:${var.db_password}@${module.rds.hostname}:${module.rds.port}/${var.db_name}"
@@ -221,6 +219,6 @@ resource "aws_wafv2_web_acl" "api" {
 }
 
 resource "aws_wafv2_web_acl_association" "api" {
-  resource_arn = module.apigateway.api_execution_arn
+  resource_arn = module.ecs.alb_arn
   web_acl_arn  = aws_wafv2_web_acl.api.arn
 }

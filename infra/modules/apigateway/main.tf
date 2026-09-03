@@ -23,12 +23,9 @@ resource "aws_apigatewayv2_api" "main" {
 resource "aws_apigatewayv2_integration" "alb" {
   api_id                 = aws_apigatewayv2_api.main.id
   integration_type       = "HTTP_PROXY"
-  integration_uri        = var.alb_listener_arn
+  integration_uri        = "http://${var.alb_dns_name}"
   integration_method     = "ANY"
   payload_format_version = "1.0"
-  request_parameters = {
-    "overwrite:header.host" = var.internal_api_host
-  }
 }
 
 resource "aws_apigatewayv2_route" "api" {

@@ -72,11 +72,6 @@ variable "additional_certificate_arn" {
   type        = string
 }
 
-variable "internal_api_host" {
-  description = "Host header used by the API Gateway integration (routed to the backend)"
-  type        = string
-}
-
 variable "backend_min_capacity" {
   description = "Minimum backend ECS tasks"
   type        = number

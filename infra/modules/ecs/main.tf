@@ -190,8 +190,8 @@ resource "aws_lb_listener_rule" "backend_http" {
   }
 
   condition {
-    host_header {
-      values = [var.internal_api_host]
+    path_pattern {
+      values = ["/api/*"]
     }
   }
 }
@@ -225,8 +225,8 @@ resource "aws_lb_listener_rule" "backend" {
   }
 
   condition {
-    host_header {
-      values = [var.internal_api_host]
+    path_pattern {
+      values = ["/api/*"]
     }
   }
 }
