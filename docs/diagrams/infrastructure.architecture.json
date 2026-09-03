@@ -5,38 +5,43 @@
     "title": "AWS Infrastructure (Terraform)",
     "quality_profile": "showcase",
     "views": [
-      { "id": "edge", "label": "Edge & CDN", "focus": ["cloudfront", "s3", "frontend-app"], "note": "CloudFront distributes the SPA from S3 and proxies API traffic." },
-      { "id": "compute", "label": "Compute & Auth", "focus": ["apigateway", "lambda", "cognito"], "note": "API Gateway authenticates via Cognito and invokes Lambda." },
-      { "id": "data", "label": "Data Layer", "focus": ["rds", "elasticache"], "note": "PostgreSQL with RDS and Redis with ElastiCache for caching/idempotency." }
+      { "id": "request-path", "label": "Request path", "focus": ["browser", "alb", "frontend", "backend", "rds"], "note": "The ALB serves the SPA; API requests reach the backend through the gateway and a host-header rule." },
+      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["backend", "cognito", "elasticache"], "note": "Cognito for identity and ElastiCache Redis for the SETNX idempotency guard." },
+      { "id": "gateway-protect", "label": "Gateway protection", "focus": ["browser", "apigateway", "waf", "alb", "backend"], "note": "WAF rate limiting and stage throttling in front of the backend." }
     ]
   },
   "components": [
-    { "id": "cloudfront", "type": "cloud", "label": "CloudFront", "sublabel": "CDN + TLS", "pos": [60, 80], "size": [140, 60] },
-    { "id": "s3", "type": "cloud", "label": "S3", "sublabel": "Static SPA", "pos": [60, 240], "size": [140, 60] },
-    { "id": "frontend-app", "type": "frontend", "label": "React App", "sublabel": "Vite + MUI", "pos": [60, 400], "size": [140, 60] },
-    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "REST API", "pos": [310, 80], "size": [150, 60] },
-    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [560, 80], "size": [150, 60] },
-    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [310, 280], "size": [150, 60] },
-    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL 16", "pos": [560, 280], "size": [140, 60] },
-    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis 7", "pos": [560, 440], "size": [150, 60] }
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "DNS · Cloudflare", "pos": [40, 190], "size": [120, 60] },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "HTTPS :443 · ACM", "pos": [240, 140], "size": [140, 60] },
+    { "id": "frontend", "type": "frontend", "label": "Frontend (Fargate)", "sublabel": "Nginx · React SPA", "pos": [760, 70], "size": [150, 60] },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [240, 380], "size": [140, 60] },
+    { "id": "waf", "type": "security", "label": "AWS WAF", "sublabel": "rate limit 2000/5min", "pos": [240, 480], "size": [140, 60] },
+    { "id": "backend", "type": "backend", "label": "Backend (Fargate)", "sublabel": "Express :3000 · auto-scale", "pos": [760, 210], "size": [150, 60] },
+    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis :6379", "pos": [760, 420], "size": [150, 60] },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [1120, 70], "size": [150, 60] },
+    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL :5432", "pos": [1120, 210], "size": [150, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [1120, 420], "size": [150, 60] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "AWS Region", "wraps": ["cloudfront", "s3", "apigateway", "cognito", "lambda", "rds", "elasticache"] },
-    { "kind": "security-group", "label": "VPC Private Subnet", "wraps": ["rds", "elasticache"] }
+    { "kind": "region", "label": "AWS Region: us-east-2", "wraps": ["alb", "frontend", "apigateway", "waf", "backend", "elasticache", "cognito", "rds", "lambda"] },
+    { "kind": "security-group", "label": "VPC (default)", "wraps": ["frontend", "backend", "elasticache", "rds", "lambda"] }
   ],
   "connections": [
-    { "id": "cf-s3", "from": "cloudfront", "to": "s3", "label": "OAI fetch", "variant": "dashed", "labelDy": 20 },
-    { "id": "cf-apigw", "from": "cloudfront", "to": "apigateway", "label": "/api/*", "variant": "emphasis" },
-    { "id": "apigw-cognito", "from": "apigateway", "to": "cognito", "label": "JWT verify", "variant": "security" },
-    { "id": "apigw-lambda", "from": "apigateway", "to": "lambda", "label": "invoke", "variant": "emphasis", "labelAt": [385, 155] },
-    { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "SQL via PgBouncer", "labelAt": [530, 250] },
-    { "id": "lambda-redis", "from": "lambda", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "labelAt": [530, 420] },
-    { "id": "s3-react", "from": "s3", "to": "frontend-app", "label": "serves", "variant": "dashed", "labelDy": 20 }
+    { "id": "browser-alb", "from": "browser", "to": "alb", "label": "HTTPS — SPA", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 170], [240, 170]], "labelAt": [185, 264] },
+    { "id": "browser-apigw", "from": "browser", "to": "apigateway", "label": "HTTPS /api", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 410], [240, 410]], "labelAt": [235, 315] },
+    { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "/ SPA", "fromSide": "right", "toSide": "left", "via": [[500, 170], [500, 100], [760, 100]], "labelAt": [630, 86] },
+    { "id": "alb-backend", "from": "alb", "to": "backend", "label": "host-header rule", "fromSide": "right", "toSide": "left", "via": [[500, 170], [500, 240], [760, 240]], "labelAt": [630, 254] },
+    { "id": "apigw-alb", "from": "apigateway", "to": "alb", "label": "/api/{proxy+} · Host", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "via": [[310, 370], [310, 210]], "labelAt": [320, 290] },
+    { "id": "waf-apigw", "from": "waf", "to": "apigateway", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "backend-cognito", "from": "backend", "to": "cognito", "label": "InitiateAuth · verify JWT", "variant": "security", "fromSide": "right", "toSide": "left", "labelAt": [1025, 160] },
+    { "id": "backend-rds", "from": "backend", "to": "rds", "label": "Prisma SQL", "fromSide": "right", "toSide": "left", "labelAt": [950, 212] },
+    { "id": "backend-lambda", "from": "backend", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "fromSide": "right", "toSide": "left" },
+    { "id": "backend-elasticache", "from": "backend", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "toSide": "top", "labelAt": [845, 345] },
+    { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "SELECT … FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "labelAt": [1205, 345] }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Edge", "items": ["CloudFront fronts all traffic", "S3 hosts the React SPA via OAI"] },
-    { "dot": "emerald", "title": "Compute", "items": ["API Gateway routes REST requests", "Lambda handles markAsDone asynchronously"] },
-    { "dot": "rose", "title": "Security", "items": ["Cognito User Pool manages auth", "JWT verification at API Gateway level"] },
-    { "dot": "violet", "title": "Data", "items": ["RDS PostgreSQL 16 for durable state", "ElastiCache Redis 7 for idempotency"] }
+    { "dot": "cyan", "title": "Edge & Delivery", "items": ["ALB serves the SPA (ACM cert)", "API via gateway api.insight.verkku.com", "No S3 · no CloudFront distribution"] },
+    { "dot": "emerald", "title": "Compute & Data", "items": ["Frontend + backend as Fargate tasks", "Backend auto-scale 1..4 (CPU 70%)", "RDS :5432 · ElastiCache :6379"] },
+    { "dot": "rose", "title": "markAsDone & Protection", "items": ["Backend invokes Lambda via SDK", "WAF rate limit 2000/5min · FOR UPDATE", "Stage throttling 100 rps"] }
   ]
 }

@@ -5,41 +5,43 @@
     "title": "Task Management System Architecture",
     "quality_profile": "showcase",
     "views": [
-      { "id": "request-path", "label": "Primary request path", "focus": ["browser", "react", "nginx", "express", "pgbouncer", "postgres"], "note": "Follow a typical CRUD request from browser to database." },
-      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["react", "cognito", "express", "redis"], "note": "JWT authentication and Redis-based idempotency checks." },
-      { "id": "async-done", "label": "markAsDone Lambda", "focus": ["express", "lambda", "postgres"], "note": "The critical flow externalized to AWS Lambda with pessimistic locking." }
+      { "id": "request-path", "label": "Request path", "focus": ["browser", "alb", "frontend", "backend", "rds"], "note": "The ALB serves the SPA; API requests reach the backend through the gateway and a host-header rule." },
+      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["backend", "cognito", "elasticache"], "note": "Cognito JWT verification and Redis-based SETNX idempotency." },
+      { "id": "gateway-protect", "label": "Gateway protection", "focus": ["browser", "apigateway", "waf", "alb", "backend"], "note": "WAF rate limiting and stage throttling in front of the backend." }
     ]
   },
   "components": [
-    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "User Agent", "pos": [40, 220], "size": [120, 60] },
-    { "id": "react", "type": "frontend", "label": "React App", "sublabel": "Vite + MUI + React Query", "pos": [220, 220], "size": [160, 60] },
-    { "id": "cognito", "type": "security", "label": "AWS Cognito", "sublabel": "User Pool + JWT", "pos": [220, 60], "size": [150, 60] },
-    { "id": "nginx", "type": "cloud", "label": "Nginx", "sublabel": "Reverse Proxy", "pos": [460, 220], "size": [130, 60] },
-    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "Node.js + TS", "pos": [660, 220], "size": [140, 60] },
-    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "Idempotency", "pos": [460, 60], "size": [130, 60] },
-    { "id": "pgbouncer", "type": "cloud", "label": "PgBouncer", "sublabel": "Pool :6432", "pos": [880, 160], "size": [130, 60] },
-    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "Tasks :5432", "pos": [880, 310], "size": [130, 60] },
-    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [660, 400], "size": [140, 60] }
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "insight.verkku.com", "pos": [40, 190], "size": [120, 60] },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "serves SPA · ACM", "pos": [240, 140], "size": [140, 60] },
+    { "id": "frontend", "type": "frontend", "label": "React SPA", "sublabel": "Nginx · Fargate", "pos": [760, 70], "size": [150, 60] },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [240, 380], "size": [140, 60] },
+    { "id": "waf", "type": "security", "label": "WAF", "sublabel": "rate limit 2000/5min", "pos": [240, 480], "size": [140, 60] },
+    { "id": "backend", "type": "backend", "label": "Express API", "sublabel": "Fargate · auto-scale", "pos": [760, 210], "size": [150, 60] },
+    { "id": "elasticache", "type": "database", "label": "Redis", "sublabel": "ElastiCache :6379", "pos": [760, 420], "size": [150, 60] },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [1120, 70], "size": [150, 60] },
+    { "id": "rds", "type": "database", "label": "PostgreSQL", "sublabel": "RDS :5432", "pos": [1120, 210], "size": [150, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [1120, 420], "size": [150, 60] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Docker Compose (Local)", "wraps": ["nginx", "express", "redis", "pgbouncer", "postgres"] },
-    { "kind": "security-group", "label": "AWS Cloud", "wraps": ["cognito", "lambda"] }
+    { "kind": "region", "label": "AWS Region: us-east-2", "wraps": ["alb", "frontend", "apigateway", "waf", "backend", "elasticache", "cognito", "rds", "lambda"] },
+    { "kind": "security-group", "label": "VPC (default)", "wraps": ["frontend", "backend", "elasticache", "rds", "lambda"] }
   ],
   "connections": [
-    { "id": "browser-react", "from": "browser", "to": "react", "label": "HTTP :5173", "variant": "emphasis" },
-    { "id": "react-cognito", "from": "react", "to": "cognito", "label": "login + JWT", "variant": "security", "fromSide": "top", "toSide": "bottom" },
-    { "id": "react-nginx", "from": "react", "to": "nginx", "label": "API calls", "variant": "emphasis" },
-    { "id": "nginx-express", "from": "nginx", "to": "express", "label": "proxy :3000", "labelAt": [560, 185] },
-    { "id": "express-redis", "from": "express", "to": "redis", "label": "SETNX / GET", "variant": "security", "fromSide": "left", "toSide": "right" },
-    { "id": "express-pgb", "from": "express", "to": "pgbouncer", "label": "SQL :6432" },
-    { "id": "pgb-pg", "from": "pgbouncer", "to": "postgres", "label": "pool :5432", "labelAt": [945, 260] },
-    { "id": "express-lambda", "from": "express", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "labelAt": [730, 310] },
-    { "id": "lambda-pg", "from": "lambda", "to": "postgres", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "right", "toSide": "left" }
+    { "id": "browser-alb", "from": "browser", "to": "alb", "label": "HTTPS — SPA", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 170], [240, 170]], "labelAt": [185, 264] },
+    { "id": "browser-apigw", "from": "browser", "to": "apigateway", "label": "HTTPS /api", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 410], [240, 410]], "labelAt": [235, 315] },
+    { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "/ SPA", "fromSide": "right", "toSide": "left", "via": [[500, 170], [500, 100], [760, 100]], "labelAt": [630, 86] },
+    { "id": "alb-backend", "from": "alb", "to": "backend", "label": "host-header rule", "fromSide": "right", "toSide": "left", "via": [[500, 170], [500, 240], [760, 240]], "labelAt": [630, 254] },
+    { "id": "apigw-alb", "from": "apigateway", "to": "alb", "label": "/api/{proxy+} · Host", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "via": [[310, 370], [310, 210]], "labelAt": [320, 290] },
+    { "id": "waf-apigw", "from": "waf", "to": "apigateway", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "backend-cognito", "from": "backend", "to": "cognito", "label": "InitiateAuth · verify JWT", "variant": "security", "fromSide": "right", "toSide": "left", "labelAt": [1025, 160] },
+    { "id": "backend-rds", "from": "backend", "to": "rds", "label": "Prisma SQL", "fromSide": "right", "toSide": "left", "labelAt": [950, 212] },
+    { "id": "backend-lambda", "from": "backend", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "fromSide": "right", "toSide": "left" },
+    { "id": "backend-elasticache", "from": "backend", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "toSide": "top", "labelAt": [845, 345] },
+    { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "SELECT … FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "labelAt": [1205, 345] }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Frontend (2026-09)", "items": ["React + Vite + MUI, Centered Nav (Users/Docs) + Drawer", "Kanban: 4-col grid desktop / Accordion mobile + Fab", "Accent 10% bg columns, reversible state & Filters accordion"] },
-    { "dot": "emerald", "title": "Backend", "items": ["Express Clean Architecture (Controllers/UseCases/Repos)", "Prisma + Users CRUD (all/create/update/delete) + auth/me", "Reversible state machine + unlocked archive fix"] },
-    { "dot": "rose", "title": "Security", "items": ["Cognito httpOnly __Host-id_token + Double Submit CSRF", "Owner/Assignee/Shared matrix + GET /auth/me", "Redis SETNX idempotency guard"] },
-    { "dot": "violet", "title": "Concurrency & Docs", "items": ["Pessimistic locking (FOR UPDATE) + PgBouncer", "Lifecycle (reversible) + Kanban workflow (archify)", "DocumentationPage with colored MD cards + HTML previews"] }
+    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA (insight.verkku.com)", "All /api via gateway (api.insight.verkku.com)", "host-header rule → backend"] },
+    { "dot": "rose", "title": "markAsDone", "items": ["Backend invokes Lambda via SDK", "FOR UPDATE lock → DONE", "SETNX idempotency via Redis"] },
+    { "dot": "emerald", "title": "Protection & scale", "items": ["WAF rate limit 2000 req/5min/IP", "Stage throttling 100 rps", "Backend auto-scale 1..4 (CPU 70%)"] }
   ]
 }
