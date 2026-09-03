@@ -39,8 +39,13 @@ output "lambda_function_arn" {
 }
 
 output "api_url" {
-  description = "API Gateway invoke URL"
+  description = "Public API URL"
   value       = module.apigateway.api_url
+}
+
+output "api_domain_name" {
+  description = "API Gateway regional domain for the Cloudflare CNAME"
+  value       = module.apigateway.api_domain_name
 }
 
 output "frontend_url" {

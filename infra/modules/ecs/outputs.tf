@@ -37,3 +37,8 @@ output "task_role_name" {
   description = "ECS task role name"
   value       = aws_iam_role.task.name
 }
+
+output "https_listener_arn" {
+  description = "ALB HTTPS listener ARN (API Gateway integration target)"
+  value       = aws_lb_listener.https.arn
+}

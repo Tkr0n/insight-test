@@ -1,9 +1,18 @@
-resource "aws_api_gateway_rest_api" "main" {
-  name        = "${var.project_name}-api"
-  description = "API for ${var.project_name}"
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/apigateway/${var.project_name}-api"
+  retention_in_days = 7
+}
 
-  endpoint_configuration {
-    types = ["REGIONAL"]
+resource "aws_apigatewayv2_api" "main" {
+  name          = "${var.project_name}-api"
+  protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_credentials = true
+    allow_origins     = var.cors_origins
+    allow_methods     = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    allow_headers     = ["Content-Type", "X-CSRF-Token", "Idempotency-Key", "Authorization"]
+    expose_headers    = ["Content-Type"]
   }
 
   tags = {
@@ -11,81 +20,56 @@ resource "aws_api_gateway_rest_api" "main" {
   }
 }
 
-resource "aws_api_gateway_authorizer" "cognito" {
-  name          = "${var.project_name}-cognito-authorizer"
-  rest_api_id   = aws_api_gateway_rest_api.main.id
-  type          = "COGNITO_USER_POOLS"
-  provider_arns = [var.cognito_pool_arn]
-}
-
-resource "aws_api_gateway_resource" "proxy" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
-  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
-  path_part   = "{proxy+}"
-}
-
-resource "aws_api_gateway_method" "proxy" {
-  rest_api_id   = aws_api_gateway_rest_api.main.id
-  resource_id   = aws_api_gateway_resource.proxy.id
-  http_method   = "ANY"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito.id
-
+resource "aws_apigatewayv2_integration" "alb" {
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "HTTP_PROXY"
+  integration_uri        = var.alb_listener_arn
+  integration_method     = "ANY"
+  payload_format_version = "1.0"
   request_parameters = {
-    "method.request.path.proxy" = true
+    "overwrite:header.host" = var.internal_api_host
   }
 }
 
-resource "aws_api_gateway_integration" "proxy" {
-  rest_api_id             = aws_api_gateway_rest_api.main.id
-  resource_id             = aws_api_gateway_resource.proxy.id
-  http_method             = aws_api_gateway_method.proxy.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = var.lambda_invoke_arn
+resource "aws_apigatewayv2_route" "api" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "ANY /api/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.alb.id}"
 }
 
-resource "aws_api_gateway_method" "root" {
-  rest_api_id   = aws_api_gateway_rest_api.main.id
-  resource_id   = aws_api_gateway_rest_api.main.root_resource_id
-  http_method   = "ANY"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito.id
-}
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.main.id
+  name        = "$default"
+  auto_deploy = true
 
-resource "aws_api_gateway_integration" "root" {
-  rest_api_id             = aws_api_gateway_rest_api.main.id
-  resource_id             = aws_api_gateway_rest_api.main.root_resource_id
-  http_method             = aws_api_gateway_method.root.http_method
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = var.lambda_invoke_arn
-}
-
-resource "aws_api_gateway_deployment" "main" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
-
-  triggers = {
-    redeployment = sha1(jsonencode([
-      aws_api_gateway_resource.proxy.id,
-      aws_api_gateway_method.proxy.id,
-      aws_api_gateway_integration.proxy.id,
-      aws_api_gateway_method.root.id,
-      aws_api_gateway_integration.root.id,
-    ]))
+  default_route_settings {
+    throttling_burst_limit = 200
+    throttling_rate_limit  = 100
   }
 
-  lifecycle {
-    create_before_destroy = true
+  access_log_settings {
+    destination_arn = "${aws_cloudwatch_log_group.api.arn}:*"
+    format          = jsonencode({
+      requestId = "$context.requestId"
+      ip        = "$context.identity.sourceIp"
+      routeKey  = "$context.routeKey"
+      status    = "$context.status"
+    })
   }
 }
 
-resource "aws_api_gateway_stage" "prod" {
-  deployment_id = aws_api_gateway_deployment.main.id
-  rest_api_id   = aws_api_gateway_rest_api.main.id
-  stage_name    = "prod"
+resource "aws_apigatewayv2_domain_name" "main" {
+  domain_name = var.api_domain
 
-  tags = {
-    Project = var.project_name
+  domain_name_configuration {
+    certificate_arn = var.api_certificate_arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
   }
+}
+
+resource "aws_apigatewayv2_api_mapping" "main" {
+  api_id      = aws_apigatewayv2_api.main.id
+  domain_name = aws_apigatewayv2_domain_name.main.id
+  stage       = aws_apigatewayv2_stage.default.id
 }

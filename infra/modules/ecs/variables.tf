@@ -66,3 +66,31 @@ variable "certificate_arn" {
   description = "ACM certificate ARN for HTTPS listener"
   type        = string
 }
+
+variable "additional_certificate_arn" {
+  description = "ACM certificate ARN for api.<domain> (SNI on the HTTPS listener)"
+  type        = string
+}
+
+variable "internal_api_host" {
+  description = "Host header used by the API Gateway integration (routed to the backend)"
+  type        = string
+}
+
+variable "backend_min_capacity" {
+  description = "Minimum backend ECS tasks"
+  type        = number
+  default     = 1
+}
+
+variable "backend_max_capacity" {
+  description = "Maximum backend ECS tasks"
+  type        = number
+  default     = 4
+}
+
+variable "backend_cpu_target" {
+  description = "Target average CPU utilization % for backend auto-scaling"
+  type        = number
+  default     = 70
+}

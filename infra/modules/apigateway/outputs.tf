@@ -1,14 +1,19 @@
 output "api_url" {
-  description = "API Gateway invoke URL"
-  value       = aws_api_gateway_stage.prod.invoke_url
+  description = "Public API URL"
+  value       = "https://${var.api_domain}"
+}
+
+output "api_domain_name" {
+  description = "Regional domain name for the Cloudflare CNAME target"
+  value       = aws_apigatewayv2_domain_name.main.domain_name_configuration[0].target_domain_name
+}
+
+output "api_execution_arn" {
+  description = "API Gateway resource ARN (for WAF association)"
+  value       = aws_apigatewayv2_api.main.arn
 }
 
 output "api_id" {
-  description = "API Gateway REST API ID"
-  value       = aws_api_gateway_rest_api.main.id
-}
-
-output "execution_arn" {
-  description = "API Gateway execution ARN"
-  value       = aws_api_gateway_rest_api.main.execution_arn
+  description = "API Gateway ID"
+  value       = aws_apigatewayv2_api.main.id
 }

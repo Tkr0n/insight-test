@@ -192,6 +192,12 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+# SNI certificate so the listener also terminates TLS for api.<domain>
+resource "aws_lb_listener_certificate" "api" {
+  listener_arn    = aws_lb_listener.https.arn
+  certificate_arn = var.additional_certificate_arn
+}
+
 resource "aws_lb_listener_rule" "backend" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
@@ -202,8 +208,8 @@ resource "aws_lb_listener_rule" "backend" {
   }
 
   condition {
-    path_pattern {
-      values = ["/api/*"]
+    host_header {
+      values = [var.internal_api_host]
     }
   }
 }
@@ -346,4 +352,27 @@ resource "aws_ecs_service" "backend" {
   }
 
   depends_on = [aws_lb_listener.http]
+}
+
+resource "aws_appautoscaling_target" "backend" {
+  service_namespace  = "ecs"
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.backend.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  min_capacity       = var.backend_min_capacity
+  max_capacity       = var.backend_max_capacity
+}
+
+resource "aws_appautoscaling_policy" "backend_cpu" {
+  name               = "${var.project_name}-backend-cpu"
+  policy_type        = "TargetTrackingScaling"
+  service_namespace  = aws_appautoscaling_target.backend.service_namespace
+  resource_id        = aws_appautoscaling_target.backend.resource_id
+  scalable_dimension = aws_appautoscaling_target.backend.scalable_dimension
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value = var.backend_cpu_target
+  }
 }
