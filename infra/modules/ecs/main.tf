@@ -179,6 +179,23 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# API Gateway reaches the backend over the ALB HTTP listener (HTTP_PROXY integration)
+resource "aws_lb_listener_rule" "backend_http" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    host_header {
+      values = [var.internal_api_host]
+    }
+  }
+}
+
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
   port              = 443

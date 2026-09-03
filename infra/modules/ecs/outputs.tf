@@ -42,3 +42,8 @@ output "https_listener_arn" {
   description = "ALB HTTPS listener ARN (API Gateway integration target)"
   value       = aws_lb_listener.https.arn
 }
+
+output "http_listener_arn" {
+  description = "ALB HTTP listener ARN (API Gateway integration target)"
+  value       = aws_lb_listener.http.arn
+}

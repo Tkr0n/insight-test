@@ -9,8 +9,8 @@ output "api_domain_name" {
 }
 
 output "api_execution_arn" {
-  description = "API Gateway resource ARN (for WAF association)"
-  value       = aws_apigatewayv2_api.main.arn
+  description = "API Gateway stage ARN (for WAF association)"
+  value       = aws_apigatewayv2_stage.default.arn
 }
 
 output "api_id" {

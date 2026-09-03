@@ -57,7 +57,7 @@ module "apigateway" {
   source = "./modules/apigateway"
 
   project_name        = var.project_name
-  alb_listener_arn    = module.ecs.https_listener_arn
+  alb_listener_arn    = module.ecs.http_listener_arn
   api_domain          = "api.${var.domain_name}"
   api_certificate_arn = aws_acm_certificate.api.arn
   cors_origins        = ["https://${var.domain_name}"]
