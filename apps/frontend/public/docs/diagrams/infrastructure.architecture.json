@@ -26,8 +26,8 @@
     { "kind": "security-group", "label": "VPC (default)", "wraps": ["frontend", "backend", "elasticache", "rds", "lambda"] }
   ],
   "connections": [
-    { "id": "browser-alb", "from": "browser", "to": "alb", "label": "HTTPS — SPA", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 170], [240, 170]], "labelAt": [185, 264] },
-    { "id": "browser-apigw", "from": "browser", "to": "apigateway", "label": "HTTPS /api", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 410], [240, 410]], "labelAt": [235, 315] },
+    { "id": "browser-alb", "from": "browser", "to": "alb", "label": "delivers SPA", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 170], [240, 170]], "labelAt": [185, 264] },
+    { "id": "browser-apigw", "from": "browser", "to": "apigateway", "label": "HTTPS /api (SPA)", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[230, 220], [230, 410], [240, 410]], "labelAt": [235, 315] },
     { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "/ SPA", "fromSide": "right", "toSide": "left", "via": [[500, 170], [500, 100], [760, 100]], "labelAt": [630, 86] },
     { "id": "alb-backend", "from": "alb", "to": "backend", "label": "/api/* path rule", "fromSide": "right", "toSide": "left", "via": [[500, 170], [500, 240], [760, 240]], "labelAt": [630, 254] },
     { "id": "apigw-alb", "from": "apigateway", "to": "alb", "label": "HTTP_PROXY", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "via": [[310, 370], [310, 210]], "labelAt": [320, 290] },
