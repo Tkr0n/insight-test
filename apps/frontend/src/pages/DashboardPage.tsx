@@ -296,7 +296,7 @@ export function DashboardPage() {
         </Stack>
       )}
 
-      {!isLoading && tasks && tasks.length === 0 && (
+      {!isLoading && tasks?.length === 0 && (
         <Paper
           elevation={0}
           sx={{
