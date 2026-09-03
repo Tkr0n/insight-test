@@ -7,9 +7,9 @@
 * **Delete:** Logical (Soft Delete) or physical deletion of the task.
 
 ## Strict Domain Rules
-1. **State Machine (reversible):** The lifecycle allows forward progression `PENDING → IN_PROGRESS → DONE → ARCHIVED` and backward correction one step at a time. Valid transitions are `PENDING ↔ IN_PROGRESS`, `IN_PROGRESS ↔ DONE`, `DONE ↔ ARCHIVED` plus direct archive `PENDING/IN_PROGRESS → ARCHIVED`. Any other jump (e.g., `PENDING → DONE`) returns HTTP `422 Unprocessable Entity`.
+1. **State Machine (reversible):** The lifecycle allows forward progression `PENDING → IN_PROGRESS → DONE → ARCHIVED` and backward correction one step at a time. Valid transitions are `PENDING ↔ IN_PROGRESS`, `IN_PROGRESS ↔ DONE`, `DONE ↔ ARCHIVED` plus direct archive `PENDING/IN_PROGRESS → ARCHIVED`. Unarchiving (`ARCHIVED`) may restore the task to **any previous state** (`PENDING`, `IN_PROGRESS` or `DONE`). Any other jump (e.g., `PENDING → DONE`) returns HTTP `422 Unprocessable Entity`.
 2. **Status change:** Only the **assignee** can change a task's status (`updateWithPermission` returns `403` otherwise); the owner controls assignment and sharing. Note the dedicated `PATCH /tasks/:id/done` endpoint is owner-scoped and externalized to a Lambda. It is reached via the API Gateway entrypoint (`api.insight.verkku.com`): the client calls `PATCH /api/tasks/:id/done`, which is proxied by the API Gateway → ALB → backend (Express), and the backend then invokes the `markAsDone` Lambda via the AWS SDK (it locks the row `FOR UPDATE` and sets `DONE`). All transitions must follow the state machine above.
-3. **Partial Immutability:** Once the task reaches the `DONE` or `ARCHIVED` status, it is locked for editing. The only permitted mutations are `title` typo fixes and valid state transitions (e.g., `DONE → ARCHIVED` or `ARCHIVED → DONE`/`DONE → IN_PROGRESS` for correction). `description` remains locked.
+3. **Partial Immutability:** Once the task reaches the `DONE` or `ARCHIVED` status, it is locked for editing. The only permitted mutations are `title` typo fixes and valid state transitions (e.g., `DONE → ARCHIVED` or `ARCHIVED → PENDING`/`IN_PROGRESS`/`DONE` for unarchive). `description` remains locked.
 
 ## Extended Task Fields
 Extended attributes introduced to support prioritization, scheduling, assignment and discovery:

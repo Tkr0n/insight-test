@@ -99,10 +99,10 @@ Theme: `ColorModeProvider` persists `light|dark` in `localStorage`, respects `pr
 PENDING: ['IN_PROGRESS','ARCHIVED']
 IN_PROGRESS: ['PENDING','DONE','ARCHIVED']
 DONE: ['IN_PROGRESS','ARCHIVED']
-ARCHIVED: ['DONE']
+ARCHIVED: ['PENDING','IN_PROGRESS','DONE']
 ```
 
-The `ARCHIVED → DONE` path enables unarchive. The lock in `TaskRepository.update/updateWithPermission` was fixed to allow status transitions even when `DONE/ARCHIVED` (only `description` and non-title fields remain blocked; `title` + valid transitions allowed). Invalid jumps (e.g., `PENDING→DONE`) are still `422`.
+The `ARCHIVED → PENDING/IN_PROGRESS/DONE` paths enable unarchive to any previous state. The lock in `TaskRepository.update/updateWithPermission` was fixed to allow status transitions even when `DONE/ARCHIVED` (only `description` and non-title fields remain blocked; `title` + valid transitions allowed). Invalid jumps (e.g., `PENDING→DONE`) are still `422`.
 
 ### Component Hierarchy (updated)
 ```

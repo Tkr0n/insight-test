@@ -21,8 +21,8 @@ describe('State Machine', () => {
       expect(VALID_TRANSITIONS.DONE).toEqual(['IN_PROGRESS', 'ARCHIVED']);
     });
 
-    it('ARCHIVED can transition to DONE (unarchive)', () => {
-      expect(VALID_TRANSITIONS.ARCHIVED).toEqual(['DONE']);
+    it('ARCHIVED can transition to any previous state (unarchive)', () => {
+      expect(VALID_TRANSITIONS.ARCHIVED).toEqual(['PENDING', 'IN_PROGRESS', 'DONE']);
     });
   });
 
@@ -35,6 +35,8 @@ describe('State Machine', () => {
       ['IN_PROGRESS', 'ARCHIVED'],
       ['DONE', 'IN_PROGRESS'],
       ['DONE', 'ARCHIVED'],
+      ['ARCHIVED', 'PENDING'],
+      ['ARCHIVED', 'IN_PROGRESS'],
       ['ARCHIVED', 'DONE'],
     ];
 
@@ -48,9 +50,6 @@ describe('State Machine', () => {
       ['IN_PROGRESS', 'IN_PROGRESS'],
       ['DONE', 'PENDING'],
       ['DONE', 'DONE'],
-      ['ARCHIVED', 'PENDING'],
-      ['ARCHIVED', 'IN_PROGRESS'],
-      ['ARCHIVED', 'ARCHIVED'],
       ['ARCHIVED', 'ARCHIVED'],
       ['PENDING', 'DONE'],
     ];

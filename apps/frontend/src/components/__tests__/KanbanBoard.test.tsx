@@ -163,4 +163,20 @@ describe('KanbanBoard', () => {
     });
     expect(onMove).toHaveBeenCalledWith('t1', 'IN_PROGRESS');
   });
+
+  it('permite drag desde ARCHIVED a cualquier estado anterior', () => {
+    const tasks: Task[] = [
+      makeTask({ id: 't1', status: 'ARCHIVED', title: 'Alpha' }),
+    ];
+    const onMove = vi.fn();
+    render(<KanbanBoard tasks={tasks} {...{ ...defaultProps, onMove }} />);
+    for (const target of ['PENDING', 'IN_PROGRESS', 'DONE'] as TaskStatus[]) {
+      onMove.mockClear();
+      capturedOnDragEnd!({
+        active: { id: 't1' },
+        over: { id: target, data: { current: {} } },
+      });
+      expect(onMove).toHaveBeenCalledWith('t1', target);
+    }
+  });
 });
