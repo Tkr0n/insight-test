@@ -3,43 +3,40 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "AWS Infrastructure (Terraform)",
-    "quality_profile": "showcase",
+    "quality_profile": "standard",
     "views": [
-      { "id": "request-path", "label": "Request path", "focus": ["browser", "frontend", "apigateway", "alb", "backend", "rds"], "note": "The SPA calls the API through the gateway; the ALB serves the SPA and routes /api to the backend." },
-      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["backend", "cognito", "elasticache"], "note": "Cognito for identity and ElastiCache Redis for the SETNX idempotency guard." },
-      { "id": "gateway-protect", "label": "Gateway protection", "focus": ["browser", "apigateway", "alb", "backend"], "note": "WAF rate limiting on the ALB and stage throttling in front of the backend." }
+      { "id": "request-path", "label": "Request path", "focus": ["browser", "alb", "frontend", "apigateway", "backend", "rds"], "note": "The ALB serves the SPA; the SPA calls the API through the gateway, which backs the Express API." },
+      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["backend", "cognito", "elasticache"], "note": "Backend verifies the Cognito JWT and uses ElastiCache Redis for SETNX idempotency." }
     ]
   },
   "components": [
-    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "DNS · Cloudflare", "pos": [40, 220], "size": [120, 60] },
-    { "id": "frontend", "type": "frontend", "label": "Frontend (Fargate)", "sublabel": "Nginx · React SPA", "pos": [240, 100], "size": [140, 60] },
-    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [240, 320], "size": [140, 60] },
-    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "HTTPS :443 · WAF", "pos": [560, 100], "size": [140, 60] },
-    { "id": "backend", "type": "backend", "label": "Backend (Fargate)", "sublabel": "Express :3000 · auto-scale", "pos": [760, 240], "size": [150, 60] },
-    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis :6379", "pos": [760, 440], "size": [150, 60] },
-    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [1000, 100], "size": [150, 60] },
-    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL :5432", "pos": [1000, 240], "size": [150, 60] },
-    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [1000, 440], "size": [150, 60] }
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "insight.verkku.com", "pos": [40, 260], "size": [120, 60] },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "HTTPS :443 · WAF", "pos": [260, 90], "size": [140, 60] },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [260, 320], "size": [140, 60] },
+    { "id": "frontend", "type": "frontend", "label": "Frontend", "sublabel": "SPA · Fargate", "pos": [520, 90], "size": [140, 60] },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [760, 90], "size": [140, 60] },
+    { "id": "backend", "type": "backend", "label": "Backend", "sublabel": "Express · Fargate", "pos": [520, 320], "size": [140, 60] },
+    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL :5432", "pos": [760, 320], "size": [140, 60] },
+    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis :6379", "pos": [520, 560], "size": [140, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [760, 560], "size": [140, 60] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "AWS Region: us-east-2", "wraps": ["frontend", "apigateway", "alb", "backend", "elasticache", "cognito", "rds", "lambda"] },
-    { "kind": "security-group", "label": "VPC (default)", "wraps": ["frontend", "alb", "backend", "elasticache", "rds", "lambda"] }
+    { "kind": "region", "label": "AWS Region: us-east-2", "wraps": ["alb", "apigateway", "frontend", "cognito", "backend", "rds", "elasticache", "lambda"] },
+    { "kind": "security-group", "label": "VPC", "wraps": ["frontend", "backend", "rds", "elasticache", "lambda"] }
   ],
   "connections": [
-    { "id": "browser-frontend", "from": "browser", "to": "frontend", "label": "loads SPA", "fromSide": "right", "toSide": "left", "via": [[200, 250], [200, 130], [240, 130]], "labelAt": [205, 205] },
-    { "id": "frontend-apigw", "from": "frontend", "to": "apigateway", "label": "HTTPS /api", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [325, 230] },
-    { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "serves", "fromSide": "left", "toSide": "right", "via": [[470, 130], [380, 130]], "labelAt": [440, 116] },
-    { "id": "apigw-alb", "from": "apigateway", "to": "alb", "label": "HTTP_PROXY", "variant": "emphasis", "fromSide": "right", "toSide": "bottom", "via": [[440, 350], [440, 170], [630, 170]], "labelAt": [520, 316] },
-    { "id": "alb-backend", "from": "alb", "to": "backend", "label": "/api/* path rule", "fromSide": "right", "toSide": "left", "via": [[730, 130], [730, 270], [760, 270]], "labelAt": [720, 200] },
-    { "id": "backend-cognito", "from": "backend", "to": "cognito", "label": "InitiateAuth · verify JWT", "variant": "security", "fromSide": "right", "toSide": "left", "via": [[955, 270], [955, 130], [1000, 130]], "labelAt": [960, 200] },
-    { "id": "backend-rds", "from": "backend", "to": "rds", "label": "Prisma", "fromSide": "right", "toSide": "left", "labelAt": [930, 252] },
-    { "id": "backend-lambda", "from": "backend", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "fromSide": "right", "toSide": "left", "labelAt": [930, 356] },
-    { "id": "backend-elasticache", "from": "backend", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelAt": [770, 370] },
-    { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "SELECT … FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "labelAt": [1010, 340] }
+    { "id": "browser-alb", "from": "browser", "to": "alb", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "serves", "fromSide": "right", "toSide": "left" },
+    { "id": "frontend-apigw", "from": "frontend", "to": "apigateway", "label": "HTTPS /api", "variant": "emphasis" },
+    { "id": "apigw-backend", "from": "apigateway", "to": "backend", "label": "HTTP_PROXY", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "backend-cognito", "from": "backend", "to": "cognito", "label": "InitiateAuth · verify JWT", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "backend-rds", "from": "backend", "to": "rds", "label": "Prisma SQL", "fromSide": "right", "toSide": "left" },
+    { "id": "backend-elasticache", "from": "backend", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelAt": [600, 420] },
+    { "id": "backend-lambda", "from": "backend", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "fromSide": "right", "toSide": "left" },
+    { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Edge & Delivery", "items": ["ALB serves the SPA (ACM cert)", "SPA → API Gateway → ALB → backend", "No S3 · no CloudFront distribution"] },
-    { "dot": "emerald", "title": "Compute & Data", "items": ["Frontend + backend as Fargate tasks", "Backend auto-scale 1..4 (CPU 70%)", "RDS :5432 · ElastiCache :6379"] },
-    { "dot": "rose", "title": "markAsDone & Protection", "items": ["Backend invokes Lambda via SDK", "WAF rate limit 2000/5min · FOR UPDATE", "Stage throttling 100 rps"] }
+    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA", "SPA calls the API via the gateway", "Gateway proxies to the backend"] },
+    { "dot": "rose", "title": "Auth", "items": ["Backend verifies the Cognito JWT", "httpOnly cookie + CSRF", "ElastiCache Redis for SETNX idempotency"] }
   ]
 }
