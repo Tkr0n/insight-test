@@ -61,8 +61,6 @@ export const DIAGRAMS: DiagramItem[] = [
   { id: 'auth-flow', title: 'Auth Flow (Sequence)', desc: 'httpOnly + CSRF double-submit', file: 'auth-flow.sequence.html', color: '#0891b2' },
   { id: 'request-flow', title: 'Request Flow (Sequence)', desc: 'markAsDone: SETNX + Lambda FOR UPDATE', file: 'request-flow.sequence.html', color: '#e11d48' },
   { id: 'infrastructure', title: 'Infrastructure', desc: 'Docker, Postgres, PgBouncer, Redis', file: 'infrastructure.architecture.html', color: '#ea580c' },
-  { id: 'task-lifecycle', title: 'Task Lifecycle', desc: 'Reversible PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED', file: 'task-lifecycle.lifecycle.html', color: '#7c3aed' },
-  { id: 'kanban-flow', title: 'Kanban Flow', desc: 'Desktop drag & drop + mobile accordion', file: 'kanban-flow.workflow.html', color: '#059669' },
 ];
 
 export function DocumentationPage() {

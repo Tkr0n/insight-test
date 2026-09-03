@@ -317,18 +317,6 @@ export function Layout({ children }: LayoutProps) {
           </ListItemIcon>
           Infrastructure
         </MenuItem>
-        <MenuItem onClick={() => openDocsDiagram('task-lifecycle')}>
-          <ListItemIcon>
-            <FlowIcon fontSize="small" />
-          </ListItemIcon>
-          Task Lifecycle
-        </MenuItem>
-        <MenuItem onClick={() => openDocsDiagram('kanban-flow')}>
-          <ListItemIcon>
-            <FlowIcon fontSize="small" />
-          </ListItemIcon>
-          Kanban Flow
-        </MenuItem>
       </Menu>
 
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)} slotProps={{ paper: { sx: { width: 300 } } }}>
@@ -386,8 +374,6 @@ export function Layout({ children }: LayoutProps) {
                 ['System Architecture', 'system.architecture'],
                 ['Auth Flow', 'auth-flow'],
                 ['Request Flow', 'request-flow'],
-                ['Task Lifecycle', 'task-lifecycle'],
-                ['Kanban Flow', 'kanban-flow'],
               ] as const).map(([label, diagram]) => (
                 <ListItemButton key={label} sx={{ pl: 4 }} onClick={() => openDrawerDiagram(diagram)}>
                   <ListItemText primary={label} />

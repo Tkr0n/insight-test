@@ -225,14 +225,12 @@ sequenceDiagram
 `DocumentationPage` (`/docs`) renders:
 - **Markdown cards** (6 docs): each with left `4px` accent border, icon, `MD` chip, `Abrir` button → `window.open(href,'_blank')`.
   - Arquitectura y Flujos, Reglas de Negocio, Esquema BD, Infraestructura, Testing, Code Quality.
-- **HTML diagrams** (6): `System Architecture`, `Auth Flow`, `Request Flow`, `Infrastructure`, plus new `Task Lifecycle`, `Kanban Flow`. Each card shows `HTML` chip, `Abrir` + `Preview` toggle that embeds an `iframe` (720px) below.
+- **HTML diagrams** (5): `System Architecture`, `Access & Roles`, `Auth Flow`, `Request Flow`, `Infrastructure`. Each card shows `HTML` chip, `Abrir` + `Preview` toggle that embeds an `iframe` (720px) below.
 
 Top nav `Documentación` menu mirrors the same entries grouped as `MARKDOWN` / `DIAGRAMAS HTML`.
 
 Diagrams (archify):
-- `system.architecture` — updated views: reversible state machine, FAB, Filters accordion, Users/Docs routes.
-- `task-lifecycle.lifecycle` — `PENDING ↔ IN_PROGRESS ↔ DONE ↔ ARCHIVED` with emphasis on archive/unarchive.
-- `kanban-flow.workflow` — desktop `DndContext` vs mobile `Accordion + Prev/Next`, column bg tint.
+- `system.architecture` — components, boundaries and the SPA → gateway → backend request path.
 
 ## Share Flow
 
