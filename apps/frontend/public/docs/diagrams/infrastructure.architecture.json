@@ -2,41 +2,56 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "AWS Infrastructure (Terraform)",
+    "title": "Insightt Delivery & Cloud Infrastructure",
     "quality_profile": "standard",
     "views": [
-      { "id": "request-path", "label": "Request path", "focus": ["browser", "alb", "frontend", "apigateway", "backend", "rds"], "note": "The ALB serves the SPA; the SPA calls the API through the gateway, which backs the Express API." },
-      { "id": "auth-and-cache", "label": "Auth & idempotency", "focus": ["backend", "cognito", "elasticache"], "note": "Backend verifies the Cognito JWT and uses ElastiCache Redis for SETNX idempotency." }
+      { "id": "delivery", "label": "Delivery pipeline", "focus": ["github-repo", "github-actions", "sonarqube", "ghcr"], "note": "Push to GitHub triggers tests, SonarQube analysis, multi-arch image builds and the deploy." },
+      { "id": "runtime", "label": "Runtime & DNS", "focus": ["browser", "cloudflare", "alb", "frontend", "apigateway", "backend"], "note": "Cloudflare routes the SPA and API; the ALB serves the SPA and proxies /api to the backend." },
+      { "id": "data-plane", "label": "Backend & data", "focus": ["backend", "cognito", "rds", "elasticache", "lambda"], "note": "Backend verifies Cognito JWT, reads RDS/Redis and invokes the markAsDone Lambda." }
     ]
   },
   "components": [
-    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "insight.verkku.com", "pos": [40, 260], "size": [120, 60] },
-    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "HTTPS :443 · WAF", "pos": [260, 90], "size": [140, 60] },
-    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [260, 320], "size": [140, 60] },
-    { "id": "frontend", "type": "frontend", "label": "Frontend", "sublabel": "SPA · Fargate", "pos": [520, 90], "size": [140, 60] },
-    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [760, 90], "size": [140, 60] },
-    { "id": "backend", "type": "backend", "label": "Backend", "sublabel": "Express · Fargate", "pos": [520, 320], "size": [140, 60] },
-    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL :5432", "pos": [760, 320], "size": [140, 60] },
-    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis :6379", "pos": [520, 560], "size": [140, 60] },
-    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [760, 560], "size": [140, 60] }
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "user", "pos": [40, 560], "size": [120, 60] },
+    { "id": "github-repo", "type": "external", "label": "GitHub Repo", "sublabel": "Tkr0n/insight-test", "pos": [60, 80], "size": [140, 60] },
+    { "id": "github-actions", "type": "cloud", "label": "GitHub Actions", "sublabel": "CI/CD", "pos": [300, 80], "size": [140, 60] },
+    { "id": "sonarqube", "type": "cloud", "label": "SonarQube", "sublabel": "code quality", "pos": [540, 80], "size": [130, 60] },
+    { "id": "ghcr", "type": "cloud", "label": "GHCR", "sublabel": "multi-arch images", "pos": [300, 300], "size": [140, 60] },
+    { "id": "cloudflare", "type": "cloud", "label": "Cloudflare", "sublabel": "DNS", "pos": [540, 560], "size": [130, 60] },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "HTTPS :443 · WAF", "pos": [820, 80], "size": [140, 60] },
+    { "id": "frontend", "type": "frontend", "label": "Frontend (Fargate)", "sublabel": "SPA · Nginx", "pos": [1040, 80], "size": [140, 60] },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [1240, 80], "size": [140, 60] },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [820, 340], "size": [140, 60] },
+    { "id": "backend", "type": "backend", "label": "Backend (Fargate)", "sublabel": "Express :3000", "pos": [1040, 340], "size": [140, 60] },
+    { "id": "rds", "type": "database", "label": "RDS", "sublabel": "PostgreSQL :5432", "pos": [1240, 340], "size": [140, 60] },
+    { "id": "elasticache", "type": "database", "label": "ElastiCache", "sublabel": "Redis :6379", "pos": [1040, 620], "size": [140, 60] },
+    { "id": "lambda", "type": "backend", "label": "Lambda", "sublabel": "markAsDone", "pos": [1240, 620], "size": [140, 60] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "AWS Region: us-east-2", "wraps": ["alb", "apigateway", "frontend", "cognito", "backend", "rds", "elasticache", "lambda"] },
-    { "kind": "security-group", "label": "VPC", "wraps": ["frontend", "backend", "rds", "elasticache", "lambda"] }
+    { "kind": "region", "label": "CI/CD", "wraps": ["github-repo", "github-actions", "sonarqube", "ghcr"] },
+    { "kind": "security-group", "label": "Cloudflare", "wraps": ["cloudflare"] },
+    { "kind": "region", "label": "AWS Region", "wraps": ["alb", "frontend", "cognito", "apigateway", "backend", "rds", "elasticache", "lambda"] }
   ],
   "connections": [
-    { "id": "browser-alb", "from": "browser", "to": "alb", "label": "HTTPS", "variant": "emphasis" },
-    { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "serves", "fromSide": "right", "toSide": "left" },
-    { "id": "frontend-apigw", "from": "frontend", "to": "apigateway", "label": "HTTPS /api", "variant": "emphasis" },
-    { "id": "apigw-backend", "from": "apigateway", "to": "backend", "label": "HTTP_PROXY", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
-    { "id": "backend-cognito", "from": "backend", "to": "cognito", "label": "InitiateAuth · verify JWT", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "repo-actions", "from": "github-repo", "to": "github-actions", "label": "push" },
+    { "id": "actions-sonar", "from": "github-actions", "to": "sonarqube", "label": "analyze" },
+    { "id": "actions-ghcr", "from": "github-actions", "to": "ghcr", "label": "build & push", "labelAt": [370, 154] },
+    { "id": "ghcr-frontend", "from": "ghcr", "to": "frontend", "label": "pull image", "labelAt": [1016, 414] },
+    { "id": "ghcr-backend", "from": "ghcr", "to": "backend", "label": "pull image", "labelAt": [1016, 414] },
+    { "id": "browser-cloudflare", "from": "browser", "to": "cloudflare", "label": "HTTPS" },
+    { "id": "cloudflare-alb", "from": "cloudflare", "to": "alb", "label": "insight.verkku.com" },
+    { "id": "cloudflare-apigw", "from": "cloudflare", "to": "apigateway", "label": "api.insight.verkku.com", "variant": "dashed" },
+    { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "serves SPA", "fromSide": "right", "toSide": "left" },
+    { "id": "apigw-alb", "from": "apigateway", "to": "alb", "label": "HTTP_PROXY", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" },
+    { "id": "alb-backend", "from": "alb", "to": "backend", "label": "/api/*", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "backend-cognito", "from": "backend", "to": "cognito", "label": "verify JWT", "variant": "security", "fromSide": "top", "toSide": "bottom" },
     { "id": "backend-rds", "from": "backend", "to": "rds", "label": "Prisma SQL", "fromSide": "right", "toSide": "left" },
-    { "id": "backend-elasticache", "from": "backend", "to": "elasticache", "label": "SETNX idempotency", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelAt": [600, 420] },
+    { "id": "backend-elasticache", "from": "backend", "to": "elasticache", "label": "SETNX", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelAt": [1110, 414] },
     { "id": "backend-lambda", "from": "backend", "to": "lambda", "label": "invoke SDK", "variant": "dashed", "fromSide": "right", "toSide": "left" },
     { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA", "SPA calls the API via the gateway (api.insight.verkku.com)", "Gateway proxies to the ALB, which routes /api to backend"] },
-    { "dot": "rose", "title": "Auth & Protection", "items": ["Backend verifies the Cognito JWT (httpOnly cookie + CSRF)", "WAF rate-limits /api at the ALB (2000 req/5min/IP)", "ElastiCache Redis for SETNX idempotency (24h TTL)"] }
+    { "dot": "emerald", "title": "Delivery", "items": ["GitHub Actions: tests + SonarQube + build/push", "Multi-arch images (amd64+arm64) in GHCR", "OpenTofu apply deploys the AWS stack"] },
+    { "dot": "cyan", "title": "DNS & Edge", "items": ["Cloudflare: insight.verkku.com → ALB", "Cloudflare: api.insight.verkku.com → API Gateway", "WAF rate-limit on the ALB (/api)"] },
+    { "dot": "rose", "title": "Runtime", "items": ["ALB serves the SPA; gateway proxies /api to backend", "Cognito JWT · RDS · Redis (SETNX) · Lambda (FOR UPDATE)", "ECS Fargate for frontend + backend"] }
   ]
 }
