@@ -5047,14 +5047,15 @@
         <path data-edge-from="terraform" data-edge-to="alb" data-edge-label="provisions" data-edge-key="5" data-edge-id="terraform-alb" data-composition-points="660,310;660,310;740,310;740,110;880,110;880,110" d="M 660 310 L 660 310 L 732 310 Q 740 310 740 302 L 740 118 Q 740 110 748 110 L 880 110 L 880 110" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="ghcr" data-edge-to="backend" data-edge-label="pull image" data-edge-key="6" data-edge-id="ghcr-backend" data-composition-points="355,340;355,400;1170,400;1170,360;1170,360" d="M 355 340 L 355 392 Q 355 400 363 400 L 1162 400 Q 1170 400 1170 392 L 1170 360 L 1170 360" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="browser" data-edge-to="cloudflare" data-edge-label="HTTPS" data-edge-key="7" data-edge-id="browser-cloudflare" data-composition-points="160,510;220,510;220,470;280,470" d="M 160 510 L 212 510 Q 220 510 220 502 L 220 478 Q 220 470 228 470 L 280 470" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="alb" data-edge-to="frontend" data-edge-label="serves SPA" data-edge-key="8" data-edge-id="alb-frontend" data-composition-points="1020,103;1100,103" d="M 1020 103 L 1100 103" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="apigateway" data-edge-to="alb" data-edge-label="HTTP_PROXY" data-edge-key="9" data-edge-id="apigw-alb" data-composition-points="950,300;950,140" d="M 950 300 L 950 140" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="alb" data-edge-to="backend" data-edge-label="/api/*" data-edge-key="10" data-edge-id="alb-backend" data-composition-points="1020,117;1060,117;1060,330;1100,330" d="M 1020 117 L 1052 117 Q 1060 117 1060 125 L 1060 322 Q 1060 330 1068 330 L 1100 330" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="backend" data-edge-to="cognito" data-edge-label="verify JWT" data-edge-key="11" data-edge-id="backend-cognito" data-composition-points="1170,300;1170,220;1370,220;1370,140" d="M 1170 300 L 1170 228 Q 1170 220 1178 220 L 1362 220 Q 1370 220 1370 212 L 1370 140" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="backend" data-edge-to="rds" data-edge-label="Prisma SQL" data-edge-key="12" data-edge-id="backend-rds" data-composition-points="1240,323;1300,323" d="M 1240 323 L 1300 323" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="backend" data-edge-to="elasticache" data-edge-label="SETNX" data-edge-key="13" data-edge-id="backend-elasticache" data-composition-points="1170,360;1170,520" d="M 1170 360 L 1170 520" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="backend" data-edge-to="lambda" data-edge-label="invoke SDK" data-edge-key="14" data-edge-id="backend-lambda" data-composition-points="1240,337;1270,337;1270,550;1300,550" d="M 1240 337 L 1262 337 Q 1270 337 1270 345 L 1270 542 Q 1270 550 1278 550 L 1300 550" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="lambda" data-edge-to="rds" data-edge-label="FOR UPDATE" data-edge-key="15" data-edge-id="lambda-rds" data-composition-points="1370,520;1370,360" d="M 1370 520 L 1370 360" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="cloudflare" data-edge-to="alb" data-edge-label="DNS" data-edge-key="8" data-edge-id="cloudflare-alb" data-composition-points="350,500;350,660;1060,660;1060,110;1020,110;1020,110" d="M 350 500 L 350 652 Q 350 660 358 660 L 1052 660 Q 1060 660 1060 652 L 1060 118 Q 1060 110 1052 110 L 1020 110 L 1020 110" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="alb" data-edge-to="frontend" data-edge-label="serves SPA" data-edge-key="9" data-edge-id="alb-frontend" data-composition-points="1020,103;1100,103" d="M 1020 103 L 1100 103" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="apigateway" data-edge-to="alb" data-edge-label="HTTP_PROXY" data-edge-key="10" data-edge-id="apigw-alb" data-composition-points="950,300;950,140" d="M 950 300 L 950 140" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="alb" data-edge-to="backend" data-edge-label="/api/*" data-edge-key="11" data-edge-id="alb-backend" data-composition-points="1020,117;1060,117;1060,330;1100,330" d="M 1020 117 L 1052 117 Q 1060 117 1060 125 L 1060 322 Q 1060 330 1068 330 L 1100 330" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="backend" data-edge-to="cognito" data-edge-label="verify JWT" data-edge-key="12" data-edge-id="backend-cognito" data-composition-points="1170,300;1170,220;1370,220;1370,140" d="M 1170 300 L 1170 228 Q 1170 220 1178 220 L 1362 220 Q 1370 220 1370 212 L 1370 140" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="backend" data-edge-to="rds" data-edge-label="Prisma SQL" data-edge-key="13" data-edge-id="backend-rds" data-composition-points="1240,323;1300,323" d="M 1240 323 L 1300 323" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="backend" data-edge-to="elasticache" data-edge-label="SETNX" data-edge-key="14" data-edge-id="backend-elasticache" data-composition-points="1170,360;1170,520" d="M 1170 360 L 1170 520" class="a-security" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="backend" data-edge-to="lambda" data-edge-label="invoke SDK" data-edge-key="15" data-edge-id="backend-lambda" data-composition-points="1240,337;1270,337;1270,550;1300,550" d="M 1240 337 L 1262 337 Q 1270 337 1270 345 L 1270 542 Q 1270 550 1278 550 L 1300 550" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="lambda" data-edge-to="rds" data-edge-label="FOR UPDATE" data-edge-key="16" data-edge-id="lambda-rds" data-composition-points="1370,520;1370,360" d="M 1370 520 L 1370 360" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
         <g id="node-browser" data-node-id="browser" data-node-label="Browser" tabindex="0" role="button" aria-label="Focus Browser, user, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="user" data-node-context="Architecture component">
@@ -5274,35 +5275,39 @@
           <rect x="203" y="470" width="34" height="14" rx="3" class="c-mask"/>
           <text x="220" y="480" class="t-muted" font-size="8" text-anchor="middle">HTTPS</text>
         </g>
-        <g data-detail="context" data-edge-from="alb" data-edge-to="frontend" data-edge-label="serves SPA" data-edge-key="8" data-edge-id="alb-frontend">
+        <g data-detail="context" data-edge-from="cloudflare" data-edge-to="alb" data-edge-label="DNS" data-edge-key="8" data-edge-id="cloudflare-alb">
+          <rect x="690" y="640" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="705" y="650" class="t-muted" font-size="8" text-anchor="middle">DNS</text>
+        </g>
+        <g data-detail="context" data-edge-from="alb" data-edge-to="frontend" data-edge-label="serves SPA" data-edge-key="9" data-edge-id="alb-frontend">
           <rect x="1031" y="83" width="58" height="14" rx="3" class="c-mask"/>
           <text x="1060" y="93" class="t-muted" font-size="8" text-anchor="middle">serves SPA</text>
         </g>
-        <g data-detail="context" data-edge-from="apigateway" data-edge-to="alb" data-edge-label="HTTP_PROXY" data-edge-key="9" data-edge-id="apigw-alb">
+        <g data-detail="context" data-edge-from="apigateway" data-edge-to="alb" data-edge-label="HTTP_PROXY" data-edge-key="10" data-edge-id="apigw-alb">
           <rect x="921" y="280" width="58" height="14" rx="3" class="c-mask"/>
           <text x="950" y="290" class="t-backend" font-size="8" text-anchor="middle">HTTP_PROXY</text>
         </g>
-        <g data-detail="context" data-edge-from="alb" data-edge-to="backend" data-edge-label="/api/*" data-edge-key="10" data-edge-id="alb-backend">
+        <g data-detail="context" data-edge-from="alb" data-edge-to="backend" data-edge-label="/api/*" data-edge-key="11" data-edge-id="alb-backend">
           <rect x="1040.6" y="203.5" width="38.8" height="14" rx="3" class="c-mask"/>
           <text x="1060" y="213.5" class="t-backend" font-size="8" text-anchor="middle">/api/*</text>
         </g>
-        <g data-detail="context" data-edge-from="backend" data-edge-to="cognito" data-edge-label="verify JWT" data-edge-key="11" data-edge-id="backend-cognito">
+        <g data-detail="context" data-edge-from="backend" data-edge-to="cognito" data-edge-label="verify JWT" data-edge-key="12" data-edge-id="backend-cognito">
           <rect x="1241" y="200" width="58" height="14" rx="3" class="c-mask"/>
           <text x="1270" y="210" class="t-security" font-size="8" text-anchor="middle">verify JWT</text>
         </g>
-        <g data-detail="context" data-edge-from="backend" data-edge-to="rds" data-edge-label="Prisma SQL" data-edge-key="12" data-edge-id="backend-rds">
+        <g data-detail="context" data-edge-from="backend" data-edge-to="rds" data-edge-label="Prisma SQL" data-edge-key="13" data-edge-id="backend-rds">
           <rect x="1241" y="303" width="58" height="14" rx="3" class="c-mask"/>
           <text x="1270" y="313" class="t-muted" font-size="8" text-anchor="middle">Prisma SQL</text>
         </g>
-        <g data-detail="context" data-edge-from="backend" data-edge-to="elasticache" data-edge-label="SETNX" data-edge-key="13" data-edge-id="backend-elasticache">
+        <g data-detail="context" data-edge-from="backend" data-edge-to="elasticache" data-edge-label="SETNX" data-edge-key="14" data-edge-id="backend-elasticache">
           <rect x="1133" y="410" width="34" height="14" rx="3" class="c-mask"/>
           <text x="1150" y="420" class="t-security" font-size="8" text-anchor="middle">SETNX</text>
         </g>
-        <g data-detail="context" data-edge-from="backend" data-edge-to="lambda" data-edge-label="invoke SDK" data-edge-key="14" data-edge-id="backend-lambda">
+        <g data-detail="context" data-edge-from="backend" data-edge-to="lambda" data-edge-label="invoke SDK" data-edge-key="15" data-edge-id="backend-lambda">
           <rect x="1241" y="423.5" width="58" height="14" rx="3" class="c-mask"/>
           <text x="1270" y="433.5" class="t-messagebus" font-size="8" text-anchor="middle">invoke SDK</text>
         </g>
-        <g data-detail="context" data-edge-from="lambda" data-edge-to="rds" data-edge-label="FOR UPDATE" data-edge-key="15" data-edge-id="lambda-rds">
+        <g data-detail="context" data-edge-from="lambda" data-edge-to="rds" data-edge-label="FOR UPDATE" data-edge-key="16" data-edge-id="lambda-rds">
           <rect x="1341" y="500" width="58" height="14" rx="3" class="c-mask"/>
           <text x="1370" y="510" class="t-backend" font-size="8" text-anchor="middle">FOR UPDATE</text>
         </g>
@@ -5329,33 +5334,7 @@
         </g>
 
         <!-- Legend -->
-        <g data-legend="" data-legend-bridge="">
-          <text x="40" y="632" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="Frontend" data-legend-x="40" data-legend-baseline="652" data-legend-width="83">
-            <rect x="40" y="643" width="16" height="10" rx="2.5" class="c-frontend" stroke-width="1"/>
-            <text x="62" y="652" class="t-muted" font-size="10" font-weight="500">Frontend</text>
-          </g>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Backend" data-legend-x="145" data-legend-baseline="652" data-legend-width="78">
-            <rect x="145" y="643" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="167" y="652" class="t-muted" font-size="10" font-weight="500">Backend</text>
-          </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="Database" data-legend-x="245" data-legend-baseline="652" data-legend-width="83">
-            <rect x="245" y="643" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
-            <text x="267" y="652" class="t-muted" font-size="10" font-weight="500">Database</text>
-          </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud" data-legend-x="350" data-legend-baseline="652" data-legend-width="68">
-            <rect x="350" y="643" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="372" y="652" class="t-muted" font-size="10" font-weight="500">Cloud</text>
-          </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Security" data-legend-x="440" data-legend-baseline="652" data-legend-width="83">
-            <rect x="440" y="643" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
-            <text x="462" y="652" class="t-muted" font-size="10" font-weight="500">Security</text>
-          </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="545" data-legend-baseline="652" data-legend-width="83">
-            <rect x="545" y="643" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="567" y="652" class="t-muted" font-size="10" font-weight="500">External</text>
-          </g>
-        </g>
+
       </svg>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">

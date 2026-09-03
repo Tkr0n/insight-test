@@ -43,6 +43,7 @@
     { "id": "terraform-alb", "from": "terraform", "to": "alb", "label": "provisions", "variant": "dashed", "fromSide": "right", "toSide": "left", "via": [[660, 310], [740, 310], [740, 110], [880, 110]] },
     { "id": "ghcr-backend", "from": "ghcr", "to": "backend", "label": "pull image", "fromSide": "bottom", "toSide": "bottom", "via": [[355, 400], [1170, 400], [1170, 360]] },
     { "id": "browser-cloudflare", "from": "browser", "to": "cloudflare", "label": "HTTPS" },
+    { "id": "cloudflare-alb", "from": "cloudflare", "to": "alb", "label": "DNS", "fromSide": "bottom", "toSide": "right", "via": [[350, 660], [1060, 660], [1060, 110], [1020, 110]] },
     { "id": "alb-frontend", "from": "alb", "to": "frontend", "label": "serves SPA", "fromSide": "right", "toSide": "left" },
     { "id": "apigw-alb", "from": "apigateway", "to": "alb", "label": "HTTP_PROXY", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" },
     { "id": "alb-backend", "from": "alb", "to": "backend", "label": "/api/*", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
