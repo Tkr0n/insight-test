@@ -200,7 +200,7 @@ export function DashboardPage() {
     );
   };
 
-  const runStatusChange = (taskId: string, status: TaskStatus) => {
+  const runStatusChange = (taskId: string, status: TaskStatus, currentStatus?: TaskStatus) => {
     setTransitioningId(taskId);
     const onSuccess = () => {
       setTransitioningId(null);
@@ -210,7 +210,7 @@ export function DashboardPage() {
       setTransitioningId(null);
       setSnackbar({ open: true, message: getErrorMessage(err), severity: 'error' });
     };
-    if (isDoneTransition(status)) {
+    if (isDoneTransition(status) && currentStatus !== 'ARCHIVED') {
       markAsDone.mutate(taskId, { onSuccess, onError });
     } else {
       updateTask.mutate({ id: taskId, status }, { onSuccess, onError });
@@ -227,7 +227,7 @@ export function DashboardPage() {
         return;
       }
     }
-    runStatusChange(taskId, newStatus);
+    runStatusChange(taskId, newStatus, task.status);
   };
 
   const handleShare = (task: Task) => {

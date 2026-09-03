@@ -240,6 +240,14 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    
+    environment:
+      name: Production
+      url: ${{ steps.frontend-url.outputs.url }}
+
+    outputs:
+      frontend_url: ${{ steps.frontend-url.outputs.url }}
+    
     steps:
       - uses: actions/checkout@v4
 
