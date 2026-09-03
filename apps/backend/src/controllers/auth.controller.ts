@@ -29,6 +29,7 @@ function getCookieOptions() {
     secure: isSecureCookies(),
     sameSite: 'lax' as const,
     path: '/',
+    domain: env.COOKIE_DOMAIN || undefined,
     maxAge: 60 * 60 * 1000,
   };
 }
@@ -39,6 +40,7 @@ function getCsrfCookieOptions() {
     secure: isSecureCookies(),
     sameSite: 'lax' as const,
     path: '/',
+    domain: env.COOKIE_DOMAIN || undefined,
     maxAge: 60 * 60 * 1000,
   };
 }
@@ -200,7 +202,7 @@ router.post('/change-password', validate(changePasswordSchema, 'body'), asyncHan
 }));
 
 router.post('/logout', (_req: Request, res: Response) => {
-  const opts = { path: '/', secure: isSecureCookies(), sameSite: 'lax' as const };
+  const opts = { path: '/', secure: isSecureCookies(), sameSite: 'lax' as const, domain: env.COOKIE_DOMAIN || undefined };
   res.clearCookie('id_token', { ...opts, httpOnly: true });
   res.clearCookie('csrf_token', { ...opts, httpOnly: false });
   res.status(204).send();
