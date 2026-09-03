@@ -2,50 +2,57 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Cognito JWT Authentication Flow",
-    "viewBox": [780, 780],
+    "title": "Cognito JWT Authentication Flow (via API Gateway)",
+    "viewBox": [980, 800],
+    "column_fit": "spread",
     "quality_profile": "showcase",
     "views": [
-      { "id": "login", "label": "Login flow", "focus": ["browser", "react", "cognito"], "note": "User authenticates directly with Cognito and receives JWT tokens." },
-      { "id": "authenticated-request", "label": "Authenticated request", "focus": ["react", "apigateway", "express"], "note": "Every API call includes the Authorization Bearer header." },
-      { "id": "ownership", "label": "Ownership scoping", "focus": ["express", "postgres"], "note": "Backend extracts user_id from JWT sub claim and scopes all queries." }
+      { "id": "login", "label": "Login flow", "focus": ["browser", "react", "apigateway", "express", "cognito"], "note": "Credentials go through the gateway to the backend, which issues httpOnly cookies." },
+      { "id": "authenticated-request", "label": "Authenticated request", "focus": ["react", "apigateway", "alb", "express"], "note": "Every API call goes through the gateway with the session cookie and CSRF header." },
+      { "id": "ownership", "label": "Ownership scoping", "focus": ["express", "cognito", "postgres"], "note": "Backend verifies the JWT via JWKS and scopes queries by the sub claim." }
     ]
   },
   "participants": [
     { "id": "browser", "type": "external", "label": "Browser", "sublabel": "user agent" },
-    { "id": "react", "type": "frontend", "label": "React App", "sublabel": "LoginPage.tsx" },
-    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool" },
-    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "REST" },
-    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "auth middleware" },
+    { "id": "react", "type": "frontend", "label": "React SPA", "sublabel": "LoginPage.tsx" },
+    { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight" },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "/api/* rule" },
+    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "auth controller" },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "JWT issuer" },
     { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "tasks table" }
   ],
   "segments": [
-    { "from": 120, "to": 310, "label": "Authentication" },
-    { "from": 330, "to": 480, "label": "Authenticated API call" },
-    { "from": 500, "to": 680, "label": "Scoped query" }
+    { "from": 130, "to": 385, "label": "Authentication" },
+    { "from": 400, "to": 712, "label": "Authenticated request + scoped query" }
   ],
   "messages": [
-    { "id": "login-init", "from": "browser", "to": "react", "y": 160, "label": "submit credentials", "variant": "emphasis" },
-    { "id": "cognito-auth", "from": "react", "to": "cognito", "y": 200, "label": "InitiateAuth", "variant": "security" },
-    { "id": "cognito-tokens", "from": "cognito", "to": "react", "y": 260, "label": "IdToken + AccessToken", "variant": "return" },
-    { "id": "store-token", "from": "react", "to": "browser", "y": 300, "label": "localStorage.setItem(id_token)", "variant": "dashed" },
-    { "id": "api-call", "from": "react", "to": "apigateway", "y": 360, "label": "GET /tasks  Authorization: Bearer <jwt>", "variant": "emphasis" },
-    { "id": "apigw-verify", "from": "apigateway", "to": "cognito", "y": 400, "label": "verify JWT signature", "variant": "security" },
-    { "id": "apigw-forward", "from": "apigateway", "to": "express", "y": 440, "label": "forward x-amzn-oidc-data", "variant": "default" },
-    { "id": "extract-sub", "from": "express", "to": "postgres", "y": 510, "label": "extract user_id from JWT sub", "variant": "dashed" },
-    { "id": "scoped-query", "from": "express", "to": "postgres", "y": 570, "label": "SELECT * FROM tasks WHERE owner_id = $1", "variant": "emphasis" },
-    { "id": "query-rows", "from": "postgres", "to": "express", "y": 630, "label": "rows (user-scoped)", "variant": "return" }
+    { "id": "submit", "from": "browser", "to": "react", "y": 160, "label": "submit credentials", "variant": "emphasis" },
+    { "id": "login-req", "from": "react", "to": "apigateway", "y": 190, "label": "POST /api/auth/login", "variant": "emphasis" },
+    { "id": "login-alb", "from": "apigateway", "to": "alb", "y": 220, "label": "HTTP_PROXY /api/…", "variant": "default" },
+    { "id": "alb-express", "from": "alb", "to": "express", "y": 250, "label": "/api/* rule", "variant": "default" },
+    { "id": "initiate-auth", "from": "express", "to": "cognito", "y": 285, "label": "InitiateAuth", "variant": "security" },
+    { "id": "id-token", "from": "cognito", "to": "express", "y": 320, "label": "IdToken", "variant": "return" },
+    { "id": "set-cookie", "from": "express", "to": "browser", "y": 360, "label": "Set-Cookie: id_token (httpOnly, Domain), csrf_token", "variant": "security" },
+    { "id": "authed-req", "from": "react", "to": "apigateway", "y": 425, "label": "GET /api/tasks · Cookie + X-CSRF-Token", "variant": "emphasis" },
+    { "id": "authed-alb", "from": "apigateway", "to": "alb", "y": 455, "label": "HTTP_PROXY /api/tasks", "variant": "default" },
+    { "id": "authed-express", "from": "alb", "to": "express", "y": 485, "label": "/api/* rule", "variant": "default" },
+    { "id": "verify-jwt", "from": "express", "to": "cognito", "y": 520, "label": "verify JWT (JWKS)", "variant": "security" },
+    { "id": "scoped-query", "from": "express", "to": "postgres", "y": 570, "label": "SELECT … WHERE owner_id = $1", "variant": "emphasis" },
+    { "id": "query-rows", "from": "postgres", "to": "express", "y": 610, "label": "rows (user-scoped)", "variant": "return" },
+    { "id": "authed-resp", "from": "express", "to": "react", "y": 650, "label": "200 Task[]", "variant": "return" },
+    { "id": "render", "from": "react", "to": "browser", "y": 690, "label": "render board", "variant": "return" }
   ],
   "activations": [
-    { "participant": "react", "from": 155, "to": 640, "type": "frontend" },
-    { "participant": "cognito", "from": 195, "to": 265, "type": "security" },
-    { "participant": "apigateway", "from": 355, "to": 640, "type": "cloud" },
-    { "participant": "express", "from": 435, "to": 635, "type": "backend" },
-    { "participant": "postgres", "from": 505, "to": 635, "type": "database" }
+    { "participant": "react", "from": 155, "to": 680, "type": "frontend" },
+    { "participant": "apigateway", "from": 185, "to": 250, "type": "cloud" },
+    { "participant": "alb", "from": 215, "to": 285, "type": "cloud" },
+    { "participant": "express", "from": 245, "to": 660, "type": "backend" },
+    { "participant": "cognito", "from": 280, "to": 330, "type": "security" },
+    { "participant": "postgres", "from": 565, "to": 615, "type": "database" }
   ],
   "cards": [
-    { "dot": "rose", "title": "Security Tradeoff", "items": ["JWT stored in localStorage (XSS vulnerable)", "Production recommended: httpOnly cookies", "Current approach acceptable for PoC"] },
-    { "dot": "emerald", "title": "Ownership Scoping", "items": ["user_id extracted from JWT sub claim", "All DB queries scoped to owner_id", "403 returned if owner_id mismatch"] },
-    { "dot": "cyan", "title": "Token Lifecycle", "items": ["Cognito issues IdToken + AccessToken", "Frontend attaches Bearer token to every request", "API Gateway validates signature before forwarding"] }
+    { "dot": "rose", "title": "Security", "items": ["id_token in an httpOnly cookie with Domain=.insight.verkku.com", "Double Submit CSRF via a readable csrf_token cookie", "Every mutating request carries X-CSRF-Token"] },
+    { "dot": "emerald", "title": "Ownership Scoping", "items": ["sub claim extracted from the verified JWT", "All queries scoped to owner_id", "403 returned on ownership mismatch"] },
+    { "dot": "cyan", "title": "Gateway Entrypoint", "items": ["All /api requests enter via api.insight.verkku.com", "Gateway forwards to the ALB, which routes /api to the backend", "JWT verification stays in Express (JWKS)"] }
   ]
 }
