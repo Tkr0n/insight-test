@@ -3,33 +3,42 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "Access & Roles",
-    "viewBox": [1100, 640],
     "quality_profile": "showcase",
     "views": [
       { "id": "roles", "label": "Roles", "focus": ["admin", "member"], "note": "Authorization is role-as-email (ADMIN_EMAIL); no role column." },
-      { "id": "lifecycle", "label": "User lifecycle", "focus": ["admin", "cognito", "browser"], "note": "AdminCreateUser temp password -> FORCE_CHANGE_PASSWORD -> sign-up auto-confirmed." },
-      { "id": "task-perms", "label": "Task permissions", "focus": ["owner", "assignee", "shared"], "note": "Shared-only viewers are read-only; buttons hidden." }
+      { "id": "user-lifecycle", "label": "User lifecycle", "focus": ["cognito", "express", "browser"], "note": "AdminCreateUser temp password -> FORCE_CHANGE_PASSWORD -> auto-confirmed sign-up." },
+      { "id": "task-permissions", "label": "Task permissions", "focus": ["tasks", "postgres"], "note": "Owner/Assignee can manage; shared-only viewers are read-only." }
     ]
   },
-  "participants": [
-    { "id": "admin", "type": "frontend", "label": "Admin", "sublabel": "email === ADMIN_EMAIL" },
-    { "id": "member", "type": "frontend", "label": "Member", "sublabel": "any other user" },
-    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool" },
-    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "React app" },
-    { "id": "owner", "type": "backend", "label": "Owner", "sublabel": "task.ownerId" },
-    { "id": "assignee", "type": "backend", "label": "Assignee", "sublabel": "task.assigneeId" },
-    { "id": "shared", "type": "backend", "label": "Shared", "sublabel": "task_shares (read-only)" }
+  "components": [
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "React app", "pos": [40, 260], "size": [120, 60] },
+    { "id": "react", "type": "frontend", "label": "React App", "sublabel": "Layout gating (isAdmin)", "pos": [260, 260], "size": [160, 60] },
+    { "id": "admin", "type": "frontend", "label": "Admin", "sublabel": "email === ADMIN_EMAIL", "pos": [260, 40], "size": [160, 60] },
+    { "id": "member", "type": "frontend", "label": "Member", "sublabel": "any other user", "pos": [500, 40], "size": [160, 60] },
+    { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool", "pos": [500, 140], "size": [150, 60] },
+    { "id": "express", "type": "backend", "label": "Express API", "sublabel": "requireAdmin", "pos": [760, 260], "size": [150, 60] },
+    { "id": "users", "type": "database", "label": "Users", "sublabel": "admin CRUD -> 403", "pos": [760, 430], "size": [150, 60] },
+    { "id": "tasks", "type": "backend", "label": "Tasks", "sublabel": "Owner / Assignee / Shared", "pos": [980, 260], "size": [160, 60] },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "tasks table", "pos": [980, 430], "size": [160, 60] }
   ],
-  "segments": [
-    { "from": 60, "to": 240, "label": "Roles" },
-    { "from": 260, "to": 400, "label": "Lifecycle" },
-    { "from": 430, "to": 620, "label": "Task permissions" }
+  "boundaries": [
+    { "kind": "region", "label": "Users & Auth", "wraps": ["admin", "member", "cognito"] },
+    { "kind": "security-group", "label": "Task domain", "wraps": ["tasks", "postgres"] }
   ],
-  "messages": [],
-  "activations": [],
+  "connections": [
+    { "id": "browser-react", "from": "browser", "to": "react", "label": "login", "variant": "emphasis", "labelAt": [200, 244] },
+    { "id": "react-admin", "from": "react", "to": "admin", "label": "Users menu", "variant": "emphasis", "labelAt": [330, 140] },
+    { "id": "react-member", "from": "react", "to": "member", "label": "menu hidden", "variant": "dashed", "labelAt": [470, 150] },
+    { "id": "react-cognito", "from": "react", "to": "cognito", "label": "login / register", "variant": "security", "labelAt": [410, 190] },
+    { "id": "react-express", "from": "react", "to": "express", "label": "/auth/me isAdmin", "fromSide": "right", "toSide": "left", "labelAt": [620, 244] },
+    { "id": "express-cognito", "from": "express", "to": "cognito", "label": "AdminCreateUser (temp pwd)", "variant": "security", "labelAt": [700, 214] },
+    { "id": "express-users", "from": "express", "to": "users", "label": "requireAdmin", "variant": "emphasis", "labelAt": [830, 340] },
+    { "id": "express-tasks", "from": "express", "to": "tasks", "label": "scoped queries", "labelAt": [880, 244] },
+    { "id": "tasks-pg", "from": "tasks", "to": "postgres", "label": "FOR UPDATE", "variant": "emphasis", "labelAt": [1000, 340] }
+  ],
   "cards": [
-    { "dot": "emerald", "title": "Roles by email", "items": ["Admin sees the Users menu", "Admin manages users (403 otherwise)", "Member: Users hidden, no management"] },
-    { "dot": "rose", "title": "Force password change", "items": ["AdminCreateUser sets a temp password", "Login returns NEW_PASSWORD_REQUIRED", "change-password completes login"] },
+    { "dot": "emerald", "title": "Roles by email", "items": ["Admin sees the Users menu and manages users", "Member: Users menu hidden, backend 403", "isAdmin = email === ADMIN_EMAIL"] },
+    { "dot": "rose", "title": "User lifecycle", "items": ["AdminCreateUser -> random temp password", "Login returns NEW_PASSWORD_REQUIRED", "change-password completes login; register auto-confirms"] },
     { "dot": "cyan", "title": "Shared = read-only", "items": ["canManage = owner || assignee", "Edit/MarkDone/Share/Delete hidden", "Read-only footer shown"] }
   ]
 }
