@@ -20,7 +20,7 @@ To prevent two requests from marking the same task as `DONE` simultaneously, two
 * **Database Level (Pessimistic Locking):** The SQL transaction uses the `WITH FOR UPDATE` clause on the task row. This ensures ACID atomicity; if Lambda A is updating the row, Lambda B will wait or fail in a controlled manner.
 
 ### Connection Pool Exhaustion
-When using Cloud Functions that scale horizontally, direct connections to PostgreSQL can exhaust database resources. To mitigate this, **PgBouncer** is placed between the backend/Lambda and PostgreSQL (simulating the role of AWS RDS Proxy).
+When using Cloud Functions that scale horizontally, direct connections to PostgreSQL can exhaust database resources. To mitigate this, the local Docker Compose stack places **PgBouncer** between the backend and PostgreSQL (simulating the role of AWS RDS Proxy). In the AWS deployment the backend and the `markAsDone` Lambda connect to RDS directly via `DATABASE_URL` / `RDS_*`.
 
 ### Observability and Logging
 A middleware is implemented to log all API activity using structured JSON logs. Each log includes: `timestamp`, `actor` (Cognito `user_id`), `method`, `path`, `query_params`, `sanitized_body`, and `status_code`.
@@ -28,7 +28,7 @@ A middleware is implemented to log all API activity using structured JSON logs. 
 ## Security: JWT Storage + CSRF
 
 ### Design Decision (Implemented)
-The Cognito `id_token` is stored in an `httpOnly` cookie (`__Host-id_token`) with `Secure + SameSite=Strict + Path=/`. This decision is paired with **API Gateway as single entrypoint** (`CloudFront -> API Gateway -> Express private VPC`) and a **Double Submit Cookie CSRF** token (`__Host-csrf`).
+The Cognito `id_token` is stored in an `httpOnly` cookie (`__Host-id_token`) with `Secure + SameSite=Strict + Path=/`. Traffic enters through the **ALB** (ACM cert, `HTTPS :443`), which serves only the SPA. All `/api/*` traffic goes through the **API Gateway** (`api.insight.verkku.com`, HTTP API) which applies WAF rate limiting and forwards to the backend via a host-header rule on the ALB. Cookies use `Domain=.insight.verkku.com` so `id_token`/`csrf_token` are sent to both the SPA and the gateway origins. Requests are protected by a **Double Submit Cookie CSRF** token (`__Host-csrf`).
 
 Previous `localStorage` approach traded XSS security for simplicity; the current design prioritizes XSS protection for production (see Gateway migration spec).
 
@@ -55,7 +55,7 @@ If an attacker injects malicious JavaScript (XSS), they can execute `localStorag
 5. `middlewares/auth.ts` reads `req.cookies['__Host-id_token']` first, fallback to `Authorization: Bearer` for backward compat/migration. Gateway forwards cookies via `VPC Link`; `CORS` is `credentials:true` with explicit `Allow-Origin`.
 
 ### Gateway Integration Notes
-- CloudFront forwards `__Host-*` cookies and `X-CSRF-Token`/`Idempotency-Key` headers to API Gateway.
+- The HTTP API forwards `/api/{proxy+}` to the ALB with `Host: api.insight.verkku.com`; the ALB host-header rule routes it to the backend. WAF rate limiting (2000 req/5min/IP) and stage throttling (100 rps) protect the gateway.
 - API Gateway `HTTP API` CORS: `allow_origins=[frontend_domain]`, `allow_credentials=true`, `allow_headers=[Content-Type,X-CSRF-Token,Idempotency-Key]`.
 - Native Cognito Authorizer (expects `Authorization` header) is not used for cookie flow; JWT verification stays in Express (`auth.ts:verifyToken` via JWKS). Optionally replace with Lambda Authorizer that parses `Cookie` in future.
 - `POST /api/auth/logout` clears both cookies (`clearCookie` with same `Secure/SameSite/Path` opts).

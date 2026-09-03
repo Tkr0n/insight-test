@@ -20,7 +20,7 @@ To prevent two requests from marking the same task as `DONE` simultaneously, two
 * **Database Level (Pessimistic Locking):** The SQL transaction uses the `WITH FOR UPDATE` clause on the task row. This ensures ACID atomicity; if Lambda A is updating the row, Lambda B will wait or fail in a controlled manner.
 
 ### Connection Pool Exhaustion
-When using Cloud Functions that scale horizontally, direct connections to PostgreSQL can exhaust database resources. To mitigate this, **PgBouncer** is placed between the backend/Lambda and PostgreSQL (simulating the role of AWS RDS Proxy).
+When using Cloud Functions that scale horizontally, direct connections to PostgreSQL can exhaust database resources. To mitigate this, the local Docker Compose stack places **PgBouncer** between the backend and PostgreSQL (simulating the role of AWS RDS Proxy). In the AWS deployment the backend and the `markAsDone` Lambda connect to RDS directly via `DATABASE_URL` / `RDS_*`.
 
 ### Observability and Logging
 A middleware is implemented to log all API activity using structured JSON logs. Each log includes: `timestamp`, `actor` (Cognito `user_id`), `method`, `path`, `query_params`, `sanitized_body`, and `status_code`.
@@ -28,7 +28,7 @@ A middleware is implemented to log all API activity using structured JSON logs. 
 ## Security: JWT Storage + CSRF
 
 ### Design Decision (Implemented)
-The Cognito `id_token` is stored in an `httpOnly` cookie (`__Host-id_token`) with `Secure + SameSite=Strict + Path=/`. This decision is paired with **API Gateway as single entrypoint** (`CloudFront -> API Gateway -> Express private VPC`) and a **Double Submit Cookie CSRF** token (`__Host-csrf`).
+The Cognito `id_token` is stored in an `httpOnly` cookie (`__Host-id_token`) with `Secure + SameSite=Strict + Path=/`. Traffic enters through the **ALB** (ACM cert, `HTTPS :443`), which routes `/api/*` to the backend Fargate service; the **API Gateway** is only the externalized `markAsDone` endpoint (proxying to the Lambda). Requests are protected by a **Double Submit Cookie CSRF** token (`__Host-csrf`).
 
 Previous `localStorage` approach traded XSS security for simplicity; the current design prioritizes XSS protection for production (see Gateway migration spec).
 
@@ -55,19 +55,25 @@ If an attacker injects malicious JavaScript (XSS), they can execute `localStorag
 5. `middlewares/auth.ts` reads `req.cookies['__Host-id_token']` first, fallback to `Authorization: Bearer` for backward compat/migration. Gateway forwards cookies via `VPC Link`; `CORS` is `credentials:true` with explicit `Allow-Origin`.
 
 ### Gateway Integration Notes
-- CloudFront forwards `__Host-*` cookies and `X-CSRF-Token`/`Idempotency-Key` headers to API Gateway.
+- The ALB forwards `__Host-*` cookies and `X-CSRF-Token`/`Idempotency-Key` headers to the backend service.
 - API Gateway `HTTP API` CORS: `allow_origins=[frontend_domain]`, `allow_credentials=true`, `allow_headers=[Content-Type,X-CSRF-Token,Idempotency-Key]`.
 - Native Cognito Authorizer (expects `Authorization` header) is not used for cookie flow; JWT verification stays in Express (`auth.ts:verifyToken` via JWKS). Optionally replace with Lambda Authorizer that parses `Cookie` in future.
 - `POST /api/auth/logout` clears both cookies (`clearCookie` with same `Secure/SameSite/Path` opts).
 
 ### Current Auth Identity Endpoint
-`GET /api/auth/me` (authenticated) returns `{ id, email }` from the verified JWT. The dashboard (`DashboardPage`) uses `useCurrentUser()` to resolve `currentUserId` reliably even when `localStorage id_token` is absent (httpOnly). A localStorage fallback `getLocalUserId()` remains for migration.
+`GET /api/auth/me` (authenticated) returns `{ id, email, isAdmin }` from the verified JWT. `isAdmin` is `email === env.ADMIN_EMAIL` (default `admin@insightt.com`). The dashboard (`DashboardPage`) uses `useCurrentUser()` to resolve `currentUserId` reliably even when `localStorage id_token` is absent (httpOnly). `Layout` uses `isAdmin` to show/hide the **Users** entry, so non-admins never see the user-management menu.
+
+### User Registration & Password Lifecycle
+- `POST /api/auth/register {email,password,name?}` → Cognito `SignUp` + `admin-confirm-sign-up` (no email delivery is configured, so the account is active immediately).
+- Admins create users through `POST /api/users` (admin-only): it creates the Cognito user via `AdminCreateUser` with a random temporary password (`MessageAction: SUPPRESS`) → status `FORCE_CHANGE_PASSWORD`, and returns `{ user, temporaryPassword }` for the admin to share.
+- On first login the temporary password makes `InitiateAuth` return a `NEW_PASSWORD_REQUIRED` challenge; the backend responds `{ challenge, session }` (no cookies yet), the client calls `POST /api/auth/change-password {email,session,newPassword}` → `RespondToAuthChallenge` → session cookies are issued.
+- `POST/PUT/DELETE /api/users` are guarded by `requireAdmin` (`email === env.ADMIN_EMAIL`); reads (`GET /users`, `/users/all`) stay open to authenticated users for the assignee dropdowns.
 
 ## Layout & Navigation
 
 `Layout.tsx` renders a sticky `AppBar` with:
 - **Left:** Logo (`TaskAlt`) + `Insightt` title (navigates to `/tasks`).
-- **Center (desktop, `md`+):** 3 pill buttons: `Tareas` (→ `/tasks`), `Usuarios` (Menu: Listar / Crear), `Documentación` (Menu: Markdown docs + HTML diagrams). Centered via `flex:1 justifyContent:center`.
+- **Center (desktop, `md`+):** `Tasks` (→ `/tasks`), `Users` (admin-only, → `/users`), `Documentation` (Menu: Markdown docs + HTML diagrams that open in a new tab). Centered via `flex:1 justifyContent:center`.
 - **Right:** Dark mode toggle (`useColorMode`) + Logout.
 - **Mobile (`down(md)`):** Hamburger `Drawer` (right, 300px) with collapsible `Usuarios` and `Documentación` sections plus theme toggle. `useMediaQuery` controls switching.
 
@@ -126,7 +132,7 @@ Column visuals:
 - Dates formatted via `formatDateISO` → `yyyy-MM-dd` (no `T00:00…`).
 - Assignee shows `email` via `assigneeEmailMap` (from `useUsers + useCurrentUser`), fallback to `id`.
 - Mobile footer adds `Prev/Next` arrow buttons (`isMobile`): `Prev` → `STATUS_ORDER[idx-1]` if `VALID_TRANSITIONS[current].includes(prev)`, `Next` → `STATUS_ORDER[idx+1]`; calls `onMove` (Dashboard `handleMove` → `PUT /api/tasks/:id {status}`).
-- Desktop footer keeps `Share/Edit/Archive/MarkDone/Delete`; `PENDING` has no transition button (drag only), `IN_PROGRESS` → `Mark Done` (via `markAsDone`), `DONE` → `Archive` (`updateWithPermission`), `ARCHIVED` none. Edit disabled only for `ARCHIVED` (so `DONE` title typo fix remains allowed).
+- Desktop footer keeps `Share/Edit/Archive/MarkDone/Delete`; `PENDING` has no transition button (drag only), `IN_PROGRESS` → `Mark Done` (via `markAsDone`), `DONE` → `Archive` (`updateWithPermission`), `ARCHIVED` none. Edit disabled only for `ARCHIVED` (so `DONE` title typo fix remains allowed). For a **shared-only** viewer (`canManage = owner || assignee` is false) the footer shows a `Read-only` label instead of those buttons (and the mobile move arrows), matching the permission matrix in `business-rules.md`.
 
 ### Drag-End Sequence (reversible)
 ```mermaid
