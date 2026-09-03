@@ -11,7 +11,7 @@
   },
   "components": [
     { "id": "browser", "type": "external", "label": "Browser", "sublabel": "insight.verkku.com", "pos": [40, 260], "size": [120, 60] },
-    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "serves SPA", "pos": [260, 90], "size": [140, 60] },
+    { "id": "alb", "type": "cloud", "label": "ALB", "sublabel": "serves SPA · WAF /api", "pos": [260, 90], "size": [140, 60] },
     { "id": "apigateway", "type": "cloud", "label": "API Gateway", "sublabel": "api.insight.verkku.com", "pos": [260, 320], "size": [140, 60] },
     { "id": "spa", "type": "frontend", "label": "SPA", "sublabel": "React · Fargate", "pos": [520, 90], "size": [140, 60] },
     { "id": "cognito", "type": "security", "label": "Cognito", "sublabel": "User Pool + JWT", "pos": [760, 90], "size": [140, 60] },
@@ -36,7 +36,7 @@
     { "id": "lambda-postgre", "from": "lambda", "to": "postgre", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA", "SPA calls the API via the gateway", "Gateway proxies to the Express API"] },
-    { "dot": "rose", "title": "Auth", "items": ["Express verifies the Cognito JWT", "httpOnly cookie + CSRF", "Redis SETNX idempotency"] }
+    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA", "SPA calls the API via the gateway (api.insight.verkku.com)", "Gateway proxies to the ALB, which routes /api to Express"] },
+    { "dot": "rose", "title": "Auth & Protection", "items": ["Express verifies the Cognito JWT (httpOnly cookie + CSRF)", "WAF rate-limits /api at the ALB (2000 req/5min/IP)", "Redis SETNX idempotency (24h TTL)"] }
   ]
 }

@@ -5422,20 +5422,20 @@
         </div>
         <ul>
           <li>&bull; ALB serves the SPA</li>
-          <li>&bull; SPA calls the API via the gateway</li>
-          <li>&bull; Gateway proxies to the backend</li>
+          <li>&bull; SPA calls the API via the gateway (api.insight.verkku.com)</li>
+          <li>&bull; Gateway proxies to the ALB, which routes /api to backend</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>Auth</h3>
+          <h3>Auth &amp; Protection</h3>
         </div>
         <ul>
-          <li>&bull; Backend verifies the Cognito JWT</li>
-          <li>&bull; httpOnly cookie + CSRF</li>
-          <li>&bull; ElastiCache Redis for SETNX idempotency</li>
+          <li>&bull; Backend verifies the Cognito JWT (httpOnly cookie + CSRF)</li>
+          <li>&bull; WAF rate-limits /api at the ALB (2000 req/5min/IP)</li>
+          <li>&bull; ElastiCache Redis for SETNX idempotency (24h TTL)</li>
         </ul>
       </div>
     </div>

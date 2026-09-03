@@ -36,7 +36,7 @@
     { "id": "lambda-rds", "from": "lambda", "to": "rds", "label": "FOR UPDATE", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA", "SPA calls the API via the gateway", "Gateway proxies to the backend"] },
-    { "dot": "rose", "title": "Auth", "items": ["Backend verifies the Cognito JWT", "httpOnly cookie + CSRF", "ElastiCache Redis for SETNX idempotency"] }
+    { "dot": "cyan", "title": "Request path", "items": ["ALB serves the SPA", "SPA calls the API via the gateway (api.insight.verkku.com)", "Gateway proxies to the ALB, which routes /api to backend"] },
+    { "dot": "rose", "title": "Auth & Protection", "items": ["Backend verifies the Cognito JWT (httpOnly cookie + CSRF)", "WAF rate-limits /api at the ALB (2000 req/5min/IP)", "ElastiCache Redis for SETNX idempotency (24h TTL)"] }
   ]
 }
