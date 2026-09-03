@@ -14,6 +14,7 @@
 | State Machine | `src/use-cases/__tests__/state-machine.test.ts` | Validates all valid/invalid transitions, error message format |
 | Idempotency | `src/middlewares/__tests__/idempotency.test.ts` | Header validation, Redis SETNX lock, 409 on duplicates, lock release on error |
 | Error Handler | `src/middlewares/__tests__/error-handler.test.ts` | AppError (custom status), ZodError (400), InvalidStateTransitionError (422), unknown (500) |
+| Auth Cookies | `src/__tests__/auth-cookies.test.ts` | Verifies `id_token` and `csrf_token` cookies are set with `Domain=.insight.verkku.com` |
 
 ### Run Commands
 ```bash
@@ -28,20 +29,20 @@ npm run test:coverage # Coverage report
 * **Config:** `apps/frontend/cypress.config.ts` (stub-based), `cypress.config.integration.ts` (AWS Cognito)
 * **Objective:** Simulate a complete real-world user flow:
   1. Navigate to the web application.
-  2. Log in using the form interacting with Cognito.
+  2. Log in using the form (the SPA posts credentials to `POST /api/auth/login`; the backend calls Cognito `InitiateAuth` and issues an httpOnly cookie + CSRF).
   3. Create a new task.
   4. Validate the proper rendering of loading indicators (loading states) in the Material UI interface.
 
 ### Two Authentication Strategies
 
 **Stub-based (default):**
-- Intercepts Cognito API calls via `cy.intercept()`
-- Returns mock JWT tokens
+- Intercepts the backend `/api/auth/*` endpoints via `cy.intercept()`
+- Returns mock JWT tokens (issued by the backend as httpOnly cookies)
 - Fast, no external dependencies
 - Run with: `npm run test:e2e` (headless) or `npm run test:e2e:open` (interactive)
 
 **AWS Cognito (integration):**
-- Runs against real AWS Cognito
+- Runs against real AWS Cognito via the backend (`POST /api/auth/login` → `InitiateAuth`)
 - Requires `CYPRESS_COGNITO_EMAIL` and `CYPRESS_COGNITO_PASSWORD` env vars
 - Run with: `npm run test:e2e:integration` (headless) or `npm run test:e2e:integration:open` (interactive)
 

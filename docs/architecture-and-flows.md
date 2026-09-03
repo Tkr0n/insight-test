@@ -28,7 +28,7 @@ A middleware is implemented to log all API activity using structured JSON logs. 
 ## Security: JWT Storage + CSRF
 
 ### Design Decision (Implemented)
-The Cognito `id_token` is stored in an `httpOnly` cookie (`__Host-id_token`) with `Secure + SameSite=Strict + Path=/`. Traffic enters through the **ALB** (ACM cert, `HTTPS :443`), which serves only the SPA. All `/api/*` traffic goes through the **API Gateway** (`api.insight.verkku.com`, HTTP API) which applies WAF rate limiting and forwards to the backend via a host-header rule on the ALB. Cookies use `Domain=.insight.verkku.com` so `id_token`/`csrf_token` are sent to both the SPA and the gateway origins. Requests are protected by a **Double Submit Cookie CSRF** token (`__Host-csrf`).
+The Cognito `id_token` is stored in an `httpOnly` cookie (`id_token`) with `Secure + SameSite=Lax + Path=/`. Traffic serving the SPA enters through the **ALB** (ACM cert, `HTTPS :443`) at `insight.verkku.com`. All `/api/*` traffic goes through the **API Gateway** (`api.insight.verkku.com`, HTTP API) which applies WAF rate limiting and forwards to the ALB DNS via an `HTTP_PROXY` integration, which routes `/api/*` to the backend via a path rule. Cookies use `Domain=.insight.verkku.com` so `id_token`/`csrf_token` are sent to both the SPA and the gateway origins. Requests are protected by a **Double Submit Cookie CSRF** token (`csrf_token`).
 
 Previous `localStorage` approach traded XSS security for simplicity; the current design prioritizes XSS protection for production (see Gateway migration spec).
 
@@ -47,16 +47,16 @@ If an attacker injects malicious JavaScript (XSS), they can execute `localStorag
 ### Implemented Production Flow (httpOnly + CSRF)
 1. Frontend `LoginPage.tsx` calls `POST /api/auth/login {email,password}` (no direct `cognito-idp` fetch).
 2. Backend `auth.controller.ts` uses `CognitoIdentityProviderClient InitiateAuth` to validate credentials, then issues:
-   - `Set-Cookie: __Host-id_token=<JWT>; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600`
-   - `Set-Cookie: __Host-csrf=<raw>.<hmac>; Secure; SameSite=Strict; Path=/; Max-Age=3600` (NOT httpOnly, readable by JS)
+   - `Set-Cookie: id_token=<JWT>; HttpOnly; Secure; SameSite=Lax; Path=/; Domain=.insight.verkku.com; Max-Age=3600`
+   - `Set-Cookie: csrf_token=<raw>.<hmac>; Secure; SameSite=Lax; Path=/; Domain=.insight.verkku.com; Max-Age=3600` (NOT httpOnly, readable by JS)
    - Body `{csrfToken}` for convenience.
-3. `axios-client.ts` uses `withCredentials:true` and an interceptor that reads `__Host-csrf` from `document.cookie` and sends `X-CSRF-Token` header on every request.
+3. `axios-client.ts` uses `withCredentials:true` and an interceptor that reads `csrf_token` from `document.cookie` and sends `X-CSRF-Token` header on every request.
 4. `middlewares/csrf.ts` (`csrfProtection`) enforces Double Submit on all mutating methods (`POST/PUT/PATCH/DELETE`): verifies `cookieToken === headerToken` and HMAC signature (`timingSafeEqual`). `GET/HEAD/OPTIONS` are exempt. `GET /api/auth/csrf` can re-issue/rotate the token.
-5. `middlewares/auth.ts` reads `req.cookies['__Host-id_token']` first, fallback to `Authorization: Bearer` for backward compat/migration. Gateway forwards cookies via `VPC Link`; `CORS` is `credentials:true` with explicit `Allow-Origin`.
+5. `middlewares/auth.ts` reads `req.cookies['id_token']` first (with `__Host-id_token` as a legacy fallback), then `Authorization: Bearer`. Cookies are forwarded via the ALB `HTTP_PROXY` to the backend; `CORS` is `credentials:true` with explicit `Allow-Origin`.
 
 ### Gateway Integration Notes
-- The HTTP API forwards `/api/{proxy+}` to the ALB with `Host: api.insight.verkku.com`; the ALB host-header rule routes it to the backend. WAF rate limiting (2000 req/5min/IP) and stage throttling (100 rps) protect the gateway.
-- API Gateway `HTTP API` CORS: `allow_origins=[frontend_domain]`, `allow_credentials=true`, `allow_headers=[Content-Type,X-CSRF-Token,Idempotency-Key]`.
+- The HTTP API (`aws_apigatewayv2`) forwards `ANY /api/{proxy+}` to the ALB DNS via an `HTTP_PROXY` integration; the ALB routes `/api/*` to the backend via a path rule. WAF (regional) rate-limiting (2000 req/5min/IP) on the ALB scoped to `/api`, and HTTP API stage throttling (100 rps / burst 200) protect the gateway.
+- API Gateway `HTTP API` CORS: `allow_origins=[https://insight.verkku.com]`, `allow_credentials=true`, `allow_headers=[Content-Type, X-CSRF-Token, Idempotency-Key, Authorization]`.
 - Native Cognito Authorizer (expects `Authorization` header) is not used for cookie flow; JWT verification stays in Express (`auth.ts:verifyToken` via JWKS). Optionally replace with Lambda Authorizer that parses `Cookie` in future.
 - `POST /api/auth/logout` clears both cookies (`clearCookie` with same `Secure/SameSite/Path` opts).
 

@@ -8,10 +8,11 @@ SonarQube provides continuous static analysis for the Insightt monorepo, detecti
 
 The analysis is configured via `sonar-project.properties` at the project root:
 
-- **Project Key:** `insightt`
+- **Project Key:** `Tkr0n_insight-test_608039e6-e7b6-45d1-81c1-62c3abd9ff55`
 - **Sources:** `apps/backend/src`, `apps/frontend/src`
-- **Tests:** `apps/backend/src/**/__tests__`, `apps/frontend/cypress`, `apps/frontend/src/tests`
-- **Exclusions:** `node_modules/`, `dist/`, `.next/`, `build/`, `cypress/`, `__tests__/`, test files, config files
+- **Tests:** `apps/backend/src/middlewares/__tests__`, `apps/backend/src/use-cases/__tests__`, `apps/frontend/cypress`, `apps/frontend/src/tests`
+- **Exclusions:** `node_modules/`, `dist/`, `.next/`, `build/`, `cypress/`, `__tests__/`, `coverage/`, `public/`, test files (`*.test.*`, `*.spec.*`), config files (`*.config.*`), and type declarations (`*.d.ts`)
+- **Report Paths:** `apps/backend/coverage/lcov.info`, `apps/frontend/coverage/lcov.info` (declared via `sonar.typescript.lcov.reportPaths`)
 
 ## Local Analysis
 
@@ -36,9 +37,9 @@ sudo apt-get install sonar-scanner
 # From project root
 sonar-scanner
 
-# With coverage reports (run tests first)
-cd apps/backend && npm test
-cd apps/frontend && npm test
+# With coverage reports (run tests first; coverage flags produce lcov.info)
+cd apps/backend && npm run test:coverage
+cd apps/frontend && npm test -- --coverage
 cd ../..
 sonar-scanner
 ```
@@ -58,16 +59,19 @@ docker run --rm \
 
 ```yaml
 - name: SonarQube Scan
-  uses: SonarSource/sonarqube-scan-action@master
+  uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+  continue-on-error: true
   env:
     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 ```
 
+The `sonarqube-scan` job sets `continue-on-error: true`, so a failed SonarQube scan does not block the deployment pipeline (the scan runs on `push` to `main` / `workflow_dispatch`).
+
 ### Pipeline Steps
 
-1. Run backend tests with coverage: `cd apps/backend && npm run test:coverage`
-2. Run frontend tests with coverage: `cd apps/frontend && npm test`
+1. Run backend tests with coverage: `cd apps/backend && npm run test:coverage` (Jest with `--coverage`)
+2. Run frontend tests: `cd apps/frontend && npm test` (Vitest). Generate coverage with `cd apps/frontend && npm test -- --coverage` if needed.
 3. Execute `sonar-scanner` from project root
 4. Quality gate fails if issues exceed threshold
 
@@ -83,6 +87,8 @@ Generate coverage before scanning:
 
 ```bash
 cd apps/backend && npm run test:coverage
-cd ../frontend && npm test
+cd ../frontend && npm test -- --coverage
 cd .. && sonar-scanner
 ```
+
+Coverage reports are only emitted when the coverage flag is passed (backend: `jest --coverage`, frontend: `vitest run --coverage`). Without it, the `lcov.info` files referenced by `sonar.typescript.lcov.reportPaths` are not produced.

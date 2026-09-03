@@ -8,7 +8,7 @@
 
 ## Strict Domain Rules
 1. **State Machine (reversible):** The lifecycle allows forward progression `PENDING → IN_PROGRESS → DONE → ARCHIVED` and backward correction one step at a time. Valid transitions are `PENDING ↔ IN_PROGRESS`, `IN_PROGRESS ↔ DONE`, `DONE ↔ ARCHIVED` plus direct archive `PENDING/IN_PROGRESS → ARCHIVED`. Any other jump (e.g., `PENDING → DONE`) returns HTTP `422 Unprocessable Entity`.
-2. **Status change:** Only the **assignee** can change a task's status (`updateWithPermission` returns `403` otherwise); the owner controls assignment and sharing. Note the dedicated `PATCH /tasks/:id/done` endpoint is owner-scoped and externalized to a Lambda (it locks the row and sets `DONE`). All transitions must follow the state machine above.
+2. **Status change:** Only the **assignee** can change a task's status (`updateWithPermission` returns `403` otherwise); the owner controls assignment and sharing. Note the dedicated `PATCH /tasks/:id/done` endpoint is owner-scoped and externalized to a Lambda. It is reached via the API Gateway entrypoint (`api.insight.verkku.com`): the client calls `PATCH /api/tasks/:id/done`, which is proxied by the API Gateway → ALB → backend (Express), and the backend then invokes the `markAsDone` Lambda via the AWS SDK (it locks the row `FOR UPDATE` and sets `DONE`). All transitions must follow the state machine above.
 3. **Partial Immutability:** Once the task reaches the `DONE` or `ARCHIVED` status, it is locked for editing. The only permitted mutations are `title` typo fixes and valid state transitions (e.g., `DONE → ARCHIVED` or `ARCHIVED → DONE`/`DONE → IN_PROGRESS` for correction). `description` remains locked.
 
 ## Extended Task Fields
@@ -26,6 +26,8 @@ Extended attributes introduced to support prioritization, scheduling, assignment
 All new fields are optional on `POST /api/tasks`; `urgency`/`importance` default to `2` and `tags` to `[]` when omitted. `PUT /api/tasks/:id` accepts any subset via `updateTaskSchema`.
 
 ## Permissions
+
+> **Routing note:** All `/api/*` traffic is served through the API Gateway (`api.insight.verkku.com`), which proxies to the ALB → backend (Express). Clients always address the gateway and never call the Express ALB path directly.
 
 ### Roles
 * **Owner (creator):** `task.ownerId === caller.sub`. Full ownership; only actor who can reassign (`assigneeId`) and share/unshare.

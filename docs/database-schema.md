@@ -1,5 +1,7 @@
 # Data Model (PostgreSQL)
 
+> **Production note:** in production the database is **AWS RDS PostgreSQL 16**, accessed by the backend (ECS Fargate) and the `markAsDone` Lambda via `DATABASE_URL` / `RDS_*`. PgBouncer connection pooling exists only in the local Docker Compose stack.
+
 ## Table: `users`
 
 | Column | Type | Constraints | Description |
