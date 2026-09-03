@@ -171,6 +171,7 @@ jobs:
             VITE_AWS_REGION=us-east-2
             VITE_COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
             VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
+            VITE_API_URL=https://api.insight.verkku.com/api
 
   build-frontend-amd64:
     if: ${{ inputs.redeploy_only != 'true' }}
@@ -208,6 +209,7 @@ jobs:
             VITE_AWS_REGION=us-east-2
             VITE_COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
             VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
+            VITE_API_URL=https://api.insight.verkku.com/api
 
   merge-frontend:
     if: ${{ inputs.redeploy_only != 'true' }}
