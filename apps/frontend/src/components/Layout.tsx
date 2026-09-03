@@ -299,6 +299,12 @@ export function Layout({ children }: LayoutProps) {
           </ListItemIcon>
           System Architecture
         </MenuItem>
+        <MenuItem onClick={() => openDocsDiagram('users-access')}>
+          <ListItemIcon>
+            <ArchIcon fontSize="small" />
+          </ListItemIcon>
+          Access & Roles
+        </MenuItem>
         <MenuItem onClick={() => openDocsDiagram('auth-flow')}>
           <ListItemIcon>
             <FlowIcon fontSize="small" />
@@ -372,6 +378,7 @@ export function Layout({ children }: LayoutProps) {
               <Divider sx={{ my: 1 }} />
               {([
                 ['System Architecture', 'system.architecture'],
+                ['Access & Roles', 'users-access'],
                 ['Auth Flow', 'auth-flow'],
                 ['Request Flow', 'request-flow'],
               ] as const).map(([label, diagram]) => (
